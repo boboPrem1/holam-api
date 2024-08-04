@@ -1,6 +1,5 @@
 /public/storage/logos/airtable
 /public/storage/logos/
-# dependencies
 /node_modules
 /.pnp
 .pnp.js
@@ -13,12 +12,11 @@
 
 # misc
 .DS_Store
-.env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 
-/npm-debug.log*
-/yarn-debug.log*
-/yarn-error.log*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
