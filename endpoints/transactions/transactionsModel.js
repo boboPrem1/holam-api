@@ -2,6 +2,22 @@ const mongoose = require("mongoose");
 
 const transactionSchema = mongoose.Schema(
   {
+    fedaPaymentRef: {
+      type: String,
+      default: "",
+    },
+    fedaPaymentId: {
+      type: String,
+      default: "",
+    },
+    paymentUrl: {
+      type: String,
+      default: "",
+    },
+    paymentToken: {
+      type: String,
+      default: "",
+    },
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -16,7 +32,14 @@ const transactionSchema = mongoose.Schema(
     type: {
       type: String,
       enum: ["deposit", "video_paid", "course_paid"],
-      default: "",
+      default: "deposit",
+    },
+    status: {
+      type: String,
+      default: "pending",
+    },
+    paidAt: {
+      type: Date,
     },
     videoPaid: {
       type: mongoose.Schema.Types.ObjectId,
@@ -31,6 +54,10 @@ const transactionSchema = mongoose.Schema(
     amount: {
       type: Number,
       default: 0,
+    },
+    currency: {
+      type: String,
+      default: "XOF",
     },
   },
   {

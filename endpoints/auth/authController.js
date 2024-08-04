@@ -318,6 +318,10 @@ exports.protect = async (req, res, next) => {
 
     // GRANT ACCESS TO PROTECTED ROUTE
     req.user = currentUser;
+    req.userIn = async () => {
+      const userIn = await User.findById(req.user);
+      return userIn;
+    };
     // console.log(req);
     // console.log("token found", currentKey);
     next();

@@ -100,6 +100,10 @@ const userSchema = mongoose.Schema(
       type: String,
       default: "",
     },
+    fedaPayCustomerId: {
+      type: String,
+      default: "",
+    },
   },
   {
     timestamps: true,

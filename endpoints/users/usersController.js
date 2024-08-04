@@ -9,7 +9,7 @@ const bcrypt = require("bcryptjs");
 exports.getMe = async (req, res) => {
   try {
     // console.log(req.user);
-    const user = await User.find({ _id: req.user._id });
+    const user = await req.userIn();
     if (!user) return res.status(404).json({ message: `User not found !` });
     res.status(200).json(user);
   } catch (error) {
@@ -24,7 +24,8 @@ exports.getAllUsers = async (req, res) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
   //
-  // console.log(req.user.role.slug)
+  // const userIn = await req.userIn();
+  // console.log(userIn);
   try {
     // if (req.user.role.slug !== "admin") queryObj.created_by = req.user._id;
     // console.log(queryObj);
@@ -123,8 +124,8 @@ exports.updateUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: `User not found !` });
-    // console.log(req.user);
-    if (user._id !== req.user._id && req.user.role.slug !== "admin")
+    // console.log(user._id != req.user._id, user._id + "", req.user._id + "");
+    if (user._id + "" != req.user._id + "" && req.user.role.slug != "admin")
       return res.status(400).json({ message: CustomUtils.consts.UNAUTHORIZED });
     const userUpdated = await User.findByIdAndUpdate(req.params.id, req.body, {
       runValidators: true,
