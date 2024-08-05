@@ -6,7 +6,7 @@ const http = require("http");
 const multer = require("multer");
 // import dotenv
 require("dotenv").config();
-// deploy is working now ...
+// Yeah
 const app = express();
 const server = http.createServer(app);
 const { Server } = require("socket.io");
