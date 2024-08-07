@@ -150,13 +150,7 @@ exports.createTransaction = async (req, res) => {
   paymentPayload.currency = {
     iso: "XOF",
   };
-  if (ENV === "dev") {
-    paymentPayload.callback_url =
-      "http://localhost:4534/v1/transactions/callback";
-  } else {
-    paymentPayload.callback_url =
-      "https://api.holam.vannios.com/transactions/callback";
-  }
+  paymentPayload.callback_url = CustomBody.callback;
 
   try {
     const fedaPayTransaction = await FedaPayTransaction.create(paymentPayload);
