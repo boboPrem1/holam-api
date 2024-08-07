@@ -1,63 +1,118 @@
-// const { S3 } = require("@aws-sdk/client-s3");
-// const multer = require("multer");
-// const multerS3 = require("multer-s3");
+const File = require("../files/filesModel");
+const {
+  uploadImageToS3,
+  uploadVideoToS3,
+  uploadAudioToS3,
+  uploadOtherToS3,
+} = require("./multerConfig");
 
-// const ACCESS_KEY_ID = process.env.ACCESS_KEY_ID;
-// const SECRET_ACCESS_KEY = process.env.SECRET_ACCESS_KEY;
-// const BUCKET_NAME = process.env.BUCKET_NAME;
-// const AWS_REGION = process.env.AWS_REGION;
+exports.uploadImage = async (req, res) => {
+  try {
+    const user = await req.userIn();
 
-// S3 config
-// const s3 = new S3({
-//   accessKeyId: ACCESS_KEY_ID,
-//   secretAccessKey: SECRET_ACCESS_KEY,
-//   region: AWS_REGION,
-//   credentials: {
-//     accessKeyId: ACCESS_KEY_ID,
-//     secretAccessKey: SECRET_ACCESS_KEY,
-//   },
-// });
+    const file = req.file;
 
-// const storage = multerS3({
-//   s3: s3,
-//   bucket: BUCKET_NAME,
-//   acl: "public-read",
-//   metadata: function (req, file, cb) {
-//     cb(null, { fieldName: file.fieldname });
-//   },
-//   key: function (req, file, cb) {
-//     cb(null, "users/images/" + Date.now().toString() + "-" + file.originalname);
-//   },
-// });
+    // const s3Url = await uploadImageToS3(file);
+    // console.log(file);
 
-// const upload = multer({ storage: storage });
+    const newFile = new File({
+      user: user._id,
+      name: file.originalname,
+      path: file.location,
+      file: file,
+    });
+    await newFile.save();
+    delete newFile.file;
 
-// const upload = multer({
-//   storage: multerS3({
-//     s3: s3,
-//     bucket: "YOUR_S3_BUCKET_NAME",
-//     acl: "public-read",
-//     metadata: function (req, file, cb) {
-//       cb(null, { fieldName: file.fieldname });
-//     },
-//     key: function (req, file, cb) {
-//       cb(null, Date.now().toString() + "-" + file.originalname);
-//     },
-//   }),
-// });
+    res.status(200).json({ message: "File uploaded successfully", newFile });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+exports.uploadVideo = async (req, res) => {
+  try {
+    const user = await req.userIn();
 
-// const storage = multer.diskStorage({
-//   destination: function (req, file, cb) {
-//     cb(null, `public/uploads/images/`);
-//   },
-//   filename: function (req, file, cb) {
-//     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-//     const ext = file.mimetype.split("/")[1];
-//     console.log(ext);
-//     cb(null, file.fieldname + "-" + uniqueSuffix + "." + ext);
-//   },
-// });
+    const file = req.file;
 
-// const upload = multer({ storage: storage });
+    const s3Url = await uploadVideoToS3(file);
 
-// module.exports.UploadImage = upload;
+    const newFile = new File({
+      user: user._id,
+      name: file.originalname,
+      path: s3Url,
+    });
+    await newFile.save();
+
+    // const file = new File({
+    //   user: user._id,
+    //   name: req.file.originalname,
+    //   path: req.file.location,
+    //   key: req.file.key,
+    // });
+    // await file.save();
+    res
+      .status(200)
+      .json({ message: "File uploaded successfully", path: s3Url });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+exports.uploadAudio = async (req, res) => {
+  try {
+    const user = await req.userIn();
+
+    const file = req.file;
+
+    const s3Url = await uploadAudioToS3(file);
+
+    const newFile = new File({
+      user: user._id,
+      name: file.originalname,
+      path: s3Url,
+    });
+    await newFile.save();
+
+    // const file = new File({
+    //   user: user._id,
+    //   name: req.file.originalname,
+    //   path: req.file.location,
+    //   key: req.file.key,
+    // });
+    // await file.save();
+    res
+      .status(200)
+      .json({ message: "File uploaded successfully", path: s3Url });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+exports.uploadOther = async (req, res) => {
+  try {
+    const user = await req.userIn();
+
+    const file = req.file;
+
+    const s3Url = await uploadOtherToS3(file);
+
+    const newFile = new File({
+      user: user._id,
+      name: file.originalname,
+      path: s3Url,
+    });
+    await newFile.save();
+
+    // const file = new File({
+    //   user: user._id,
+    //   name: req.file.originalname,
+    //   path: req.file.location,
+    //   key: req.file.key,
+    // });
+    // await file.save();
+    res
+      .status(200)
+      .json({ message: "File uploaded successfully", path: s3Url });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

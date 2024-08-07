@@ -50,7 +50,7 @@ const geolocationServiceTransactionsRoutes = require("./endpoints/geolocationSer
 const geolocationServicePointsRoutes = require("./endpoints/geolocationServicePoints/geolocationServicePointsRoutes.js");
 const monitoringsRoutes = require("./endpoints/monitorings/monitoringsRoutes.js");
 const dashboardRoutes = require("./endpoints/tableauDeBord/dashboardRoutes.js");
-// const uploadRoutes = require("./endpoints/uploads/uploadRoutes");
+const uploadRoutes = require("./endpoints/uploads/uploadRoutes");
 
 const origins = process.env.ORIGINS;
 // const ORIGINS_ARRAY = origins.split(",");
@@ -136,7 +136,7 @@ app.use(
   API_URL_BASE + "dashboard",
   dashboardRoutes
 );
-// app.use(API_URL_BASE + "upload", uploadRoutes);
+app.use(API_URL_BASE + "upload", uploadRoutes);
 
 // Routes
 app.get(API_URL_BASE, (req, res) => {

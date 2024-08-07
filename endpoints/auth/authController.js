@@ -5,6 +5,29 @@ const jwt = require("jsonwebtoken");
 const CustomUtils = require("../../utils/index.js");
 const Otp = require("../otps/otpsModel.js");
 const bcrypt = require("bcryptjs");
+const { SNSClient, PublishCommand } = require("@aws-sdk/client-sns");
+require("dotenv").config();
+
+// const s3 = new S3Client({
+//   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+//   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+//   region: process.env.AWS_REGION,
+//   credentials: {
+//     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+//     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+//   },
+// });
+
+const APP_NAME = process.env.APP_NAME;
+const snsClient = new SNSClient({
+  region: process.env.AWS_REGION,
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
+});
 
 // Hash password universal function
 async function hashPassword(password) {
@@ -61,13 +84,32 @@ exports.sign = async (req, res, next) => {
       otp: randomNumber,
       exp: endingDate,
     });
+
+    const params = {
+      Message: `Your OTP is: ${otp.otp}`,
+      PhoneNumber: indicatif + "" + number,
+      MessageAttributes: {
+        "AWS.SNS.SMS.SenderID": {
+          DataType: "String",
+          StringValue: APP_NAME, // Remplacez par le nom de votre application
+        },
+      },
+    };
+
+    try {
+      const data = await snsClient.send(new PublishCommand(params));
+      // res.status(200).json({ message: "OTP sent successfully", data });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to send OTP", error });
+    }
+
     // res.status(201).json(otp);
     res.status(200).json({
       existing: false,
       created: true,
       otpSended: true,
     });
-    console.log(otp.otp);
+    // console.log(otp.otp);
   }
 };
 

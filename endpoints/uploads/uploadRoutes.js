@@ -1,13 +1,16 @@
-const router = require('express').Router();	
+const router = require("express").Router();
+const { upload, uploadImageToS3, uploadVideoToS3, uploadAudioToS3, uploadOtherToS3 } = require("./multerConfig");
 
-const { UploadImage } = require("./uploadsController");
+const {
+  uploadAudio,
+  uploadImage,
+  uploadOther,
+  uploadVideo,
+} = require("./uploadsController");
 
-router.post("/images", UploadImage.single("image"), (req, res) => {
-  return res.json({ url: req.file.location });
-});
-
-router.post("images/multiple", UploadImage.array("images", 10), (req, res) => {
-  return res.send(`Success`);
-});
+router.post("/image", uploadImageToS3.single("file"), uploadImage);
+router.post("/video", uploadVideoToS3.single("file"), uploadVideo);
+router.post("/audio", uploadAudioToS3.single("file"), uploadAudio);
+router.post("/other", uploadOtherToS3.single("file"), uploadOther);
 
 module.exports = router;

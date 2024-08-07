@@ -13,6 +13,15 @@ const fileSchema = mongoose.Schema(
       required: true,
       unique: true,
     },
+    name: {
+      type: String,
+    },
+    key: {
+      type: String,
+    },
+    key: {
+      file: {},
+    },
   },
   {
     timestamps: true,

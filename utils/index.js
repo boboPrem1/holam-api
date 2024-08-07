@@ -115,11 +115,7 @@ class CustomUtils {
   };
 
   static getRandomNbr(max = 999999) {
-    let nb = Math.round(Math.random() * max) + "";
-    while (nb.length !== 6) {
-      nb = Math.round(Math.random() * max) + "";
-    }
-    return Math.round(Math.random() * max);
+    return Math.floor(100000 + Math.random() * 900000).toString();
   }
 
   static getRandomStr(n) {
