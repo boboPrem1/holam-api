@@ -7,6 +7,8 @@ const CustomUtils = require("../../utils/index.js");
 exports.getAllActivitySubCategories = async (req, res, next) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
+  const userIn = await req.userIn();
+  queryObj.user = userIn._id;
   try {
     const activitySubCategories = await ActivitySubCategory.find(queryObj)
       .limit(limit * 1)
@@ -27,9 +29,17 @@ exports.getAllActivitySubCategories = async (req, res, next) => {
 exports.getActivitySubCategoryById = async (req, res) => {
   try {
     // get activitySubCategory type by id
-    const activitySubCategory = await ActivitySubCategory.findById(
-      req.params.id
-    );
+    const userIn = await req.userIn();
+    // get activity by id
+    const activitySubCategorySearch = await ActivitySubCategory.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const activitySubCategory = activitySubCategorySearch[0];
     if (!activitySubCategory)
       return res.status(404).json({
         message: CustomUtils.consts.NOT_FOUND,
@@ -46,6 +56,9 @@ exports.getActivitySubCategoryById = async (req, res) => {
 exports.createActivitySubCategory = async (req, res) => {
   const CustomBody = { ...req.body };
   const slug = CustomUtils.slugify(CustomBody.name);
+  
+  const userIn = await req.userIn();
+  CustomBody.user = userIn._id;
   try {
     CustomBody.slug = slug;
     // create new activitySubCategory type
@@ -61,9 +74,15 @@ exports.createActivitySubCategory = async (req, res) => {
 // @Access: Private
 exports.updateActivitySubCategory = async (req, res) => {
   try {
-    const activitySubCategory = await ActivitySubCategory.findById(
-      req.params.id
-    );
+    const activitySubCategorySearch = await ActivitySubCategory.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const activitySubCategory = activitySubCategorySearch[0];
     if (!activitySubCategory) {
       return res
         .status(404)
@@ -88,9 +107,15 @@ exports.updateActivitySubCategory = async (req, res) => {
 // @Access: Private
 exports.deleteActivitySubCategory = async (req, res, next) => {
   try {
-    const activitySubCategory = await ActivitySubCategory.findById(
-      req.params.id
-    );
+    const activitySubCategorySearch = await ActivitySubCategory.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const activitySubCategory = activitySubCategorySearch[0];
     if (!activitySubCategory)
       return res
         .status(404)
