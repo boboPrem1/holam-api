@@ -7,6 +7,8 @@ const CustomUtils = require("../../utils/index.js");
 exports.getAllChats = async (req, res, next) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
+  const userIn = await req.userIn();
+  queryObj.user = userIn._id;
   try {
     const chats = await Chat.find(queryObj)
       .limit(limit * 1)
@@ -27,7 +29,17 @@ exports.getAllChats = async (req, res, next) => {
 exports.getChatById = async (req, res) => {
   try {
     // get chat by id
-    const chat = await Chat.findById(req.params.id);
+    const userIn = await req.userIn();
+    // get chat by id
+    const chatSearch = await Chat.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const chat = chatSearch[0];
     if (!chat)
       return res.status(404).json({
         message: CustomUtils.consts.NOT_FOUND,
@@ -43,9 +55,11 @@ exports.getChatById = async (req, res) => {
 exports.createChat = async (req, res) => {
   const CustomBody = { ...req.body };
   const slug = CustomUtils.slugify(CustomBody.name);
+  const userIn = await req.userIn();
+  CustomBody.user = userIn._id;
   try {
     CustomBody.slug = slug;
-    // create new chat     
+    // create new chat
     const chat = await Chat.create(CustomBody);
     res.status(201).json(chat);
   } catch (error) {
@@ -58,7 +72,17 @@ exports.createChat = async (req, res) => {
 // @Access: Private
 exports.updateChat = async (req, res) => {
   try {
-    const chat = await Chat.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const chatSearch = await Chat.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const chat = chatSearch[0];
     if (!chat) {
       return res.status(404).json({ message: "chat not found !" });
     }
@@ -77,7 +101,17 @@ exports.updateChat = async (req, res) => {
 // @Access: Private
 exports.deleteChat = async (req, res, next) => {
   try {
-    const chat = await Chat.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const chatSearch = await Chat.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const chat = chatSearch[0];
     if (!chat) return res.status(404).json({ message: `chat not found !` });
     await Chat.findByIdAndDelete(req.params.id);
     res.status(200).json({ message: "chat deleted successfully !" });

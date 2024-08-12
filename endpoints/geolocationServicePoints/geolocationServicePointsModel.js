@@ -2,6 +2,12 @@ const mongoose = require("mongoose");
 
 const geolocationServicePointSchema = mongoose.Schema(
   {
+    user: {
+      type: String,
+      ref: "User",
+      default: "000000000000000000000000",
+      required: true,
+    },
     transaction: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "GeolocationServiceTransaction",
@@ -20,7 +26,7 @@ const geolocationServicePointSchema = mongoose.Schema(
     },
     description: {
       type: String,
-    }
+    },
   },
   {
     timestamps: true,
@@ -33,6 +39,10 @@ geolocationServicePointSchema.pre(/^find/, function (next) {
   this.populate({
     path: "transaction",
     select: "amount",
+  });
+  this.populate({
+    path: "user",
+    select: "_id username firstname lastname role",
   });
   next();
 });

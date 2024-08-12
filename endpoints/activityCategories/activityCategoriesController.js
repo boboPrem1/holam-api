@@ -30,7 +30,7 @@ exports.getActivityCategoryById = async (req, res) => {
   try {
     // get activityCategory type by id
     const userIn = await req.userIn();
-    // get activity by id
+
     const activityCategorySearch = await ActivityCategory.find({
       _id: {
         $eq: req.params.id,
@@ -56,7 +56,7 @@ exports.getActivityCategoryById = async (req, res) => {
 exports.createActivityCategory = async (req, res) => {
   const CustomBody = { ...req.body };
   const slug = CustomUtils.slugify(CustomBody.name);
-  
+
   const userIn = await req.userIn();
   CustomBody.user = userIn._id;
   try {
@@ -75,7 +75,7 @@ exports.createActivityCategory = async (req, res) => {
 exports.updateActivityCategory = async (req, res) => {
   try {
     const userIn = await req.userIn();
-    // get activity by id
+
     const activityCategorySearch = await ActivityCategory.find({
       _id: {
         $eq: req.params.id,
@@ -86,9 +86,7 @@ exports.updateActivityCategory = async (req, res) => {
     });
     const activityCategory = activityCategorySearch[0];
     if (!activityCategory) {
-      return res
-        .status(404)
-        .json({ message: "activityCategory not found !" });
+      return res.status(404).json({ message: "activityCategory not found !" });
     }
 
     const updated = await ActivityCategory.findByIdAndUpdate(
@@ -110,7 +108,7 @@ exports.updateActivityCategory = async (req, res) => {
 exports.deleteActivityCategory = async (req, res, next) => {
   try {
     const userIn = await req.userIn();
-    // get activity by id
+
     const activityCategorySearch = await ActivityCategory.find({
       _id: {
         $eq: req.params.id,
@@ -121,9 +119,7 @@ exports.deleteActivityCategory = async (req, res, next) => {
     });
     const activityCategory = activityCategorySearch[0];
     if (!activityCategory)
-      return res
-        .status(404)
-        .json({ message: `activityCategory not found !` });
+      return res.status(404).json({ message: `activityCategory not found !` });
     await ActivityCategory.findByIdAndDelete(req.params.id);
     res
       .status(200)

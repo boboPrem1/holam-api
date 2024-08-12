@@ -9,6 +9,11 @@ const userRoleSchema = mongoose.Schema(
       ref: "Permission",
       default: "000000000000000000000000",
     },
+    user: {
+      type: String,
+      ref: "User",
+      default: "000000000000000000000000",
+    },
   },
   {
     timestamps: true,
@@ -21,6 +26,10 @@ userRoleSchema.pre(/^find/, function (next) {
   this.populate({
     path: "permission",
     select: "code perms",
+  });
+  this.populate({
+    path: "user",
+    select: "_id username firstname lastname role",
   });
   next();
 });

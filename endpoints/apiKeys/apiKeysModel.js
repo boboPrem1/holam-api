@@ -2,6 +2,12 @@ const mongoose = require("mongoose");
 
 const apiKeySchema = mongoose.Schema(
   {
+    user: {
+      type: String,
+      ref: "User",
+      default: "000000000000000000000000",
+      required: true,
+    },
     key: { type: String, default: "", required: true },
     application: { type: String, default: "", required: true },
     permission: {
@@ -21,6 +27,10 @@ apiKeySchema.pre(/^find/, function (next) {
   this.populate({
     path: "permission",
     select: "code perms",
+  });
+  this.populate({
+    path: "user",
+    select: "_id username firstname lastname role",
   });
   next();
 });

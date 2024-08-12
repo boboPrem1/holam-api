@@ -7,6 +7,8 @@ const CustomUtils = require("../../utils/index.js");
 exports.getAllGtnTags = async (req, res, next) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
+  const userIn = await req.userIn();
+  queryObj.user = userIn._id;
   try {
     const tags = await GtnTag.find(queryObj)
       .limit(limit * 1)
@@ -27,7 +29,17 @@ exports.getAllGtnTags = async (req, res, next) => {
 exports.getGtnTagById = async (req, res) => {
   try {
     // get tag type by id
-    const tag = await GtnTag.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const tagSearch = await GtnTag.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const tag = tagSearch[0];
     if (!tag)
       return res.status(404).json({
         message: CustomUtils.consts.NOT_FOUND,
@@ -44,6 +56,8 @@ exports.getGtnTagById = async (req, res) => {
 exports.createGtnTag = async (req, res) => {
   const CustomBody = { ...req.body };
   const slug = CustomUtils.slugify(CustomBody.name);
+  const userIn = await req.userIn();
+  CustomBody.user = userIn._id;
   try {
     CustomBody.slug = slug;
     // create new tag type
@@ -59,7 +73,17 @@ exports.createGtnTag = async (req, res) => {
 // @Access: Private
 exports.updateGtnTag = async (req, res) => {
   try {
-    const tag = await GtnTag.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const tagSearch = await GtnTag.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const tag = tagSearch[0];
     if (!tag) {
       return res.status(404).json({ message: "tag not found !" });
     }
@@ -78,7 +102,17 @@ exports.updateGtnTag = async (req, res) => {
 // @Access: Private
 exports.deleteGtnTag = async (req, res, next) => {
   try {
-    const tag = await GtnTag.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const tagSearch = await GtnTag.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const tag = tagSearch[0];
     if (!tag) return res.status(404).json({ message: `tag not found !` });
     await GtnTag.findByIdAndDelete(req.params.id);
     res.status(200).json({ message: "tag deleted successfully !" });

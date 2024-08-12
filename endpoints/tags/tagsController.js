@@ -7,6 +7,8 @@ const CustomUtils = require("../../utils/index.js");
 exports.getAllTags = async (req, res, next) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
+  const userIn = await req.userIn();
+  queryObj.user = userIn._id;
   try {
     const tags = await Tag.find(queryObj)
       .limit(limit * 1)
@@ -27,7 +29,17 @@ exports.getAllTags = async (req, res, next) => {
 exports.getTagById = async (req, res) => {
   try {
     // get tag type by id
-    const tag = await Tag.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const tagSearch = await Tag.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const tag = tagSearch[0];
     if (!tag)
       return res.status(404).json({
         message: CustomUtils.consts.NOT_FOUND,
@@ -44,6 +56,9 @@ exports.getTagById = async (req, res) => {
 exports.createTag = async (req, res) => {
   const CustomBody = { ...req.body };
   const slug = CustomUtils.slugify(CustomBody.name);
+
+  const userIn = await req.userIn();
+  CustomBody.user = userIn._id;
   try {
     CustomBody.slug = slug;
     // create new tag type
@@ -59,7 +74,17 @@ exports.createTag = async (req, res) => {
 // @Access: Private
 exports.updateTag = async (req, res) => {
   try {
-    const tag = await Tag.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const tagSearch = await Tag.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const tag = tagSearch[0];
     if (!tag) {
       return res.status(404).json({ message: "tag not found !" });
     }
@@ -78,7 +103,17 @@ exports.updateTag = async (req, res) => {
 // @Access: Private
 exports.deleteTag = async (req, res, next) => {
   try {
-    const tag = await Tag.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const tagSearch = await Tag.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const tag = tagSearch[0];
     if (!tag) return res.status(404).json({ message: `tag not found !` });
     await Tag.findByIdAndDelete(req.params.id);
     res.status(200).json({ message: "tag deleted successfully !" });

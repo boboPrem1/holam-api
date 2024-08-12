@@ -104,6 +104,11 @@ const userSchema = mongoose.Schema(
       type: String,
       default: "",
     },
+    user: {
+      type: String,
+      ref: "User",
+      default: "000000000000000000000000",
+    },
   },
   {
     timestamps: true,
@@ -123,6 +128,10 @@ userSchema.pre(/^find/, function (next) {
   this.populate({
     path: "created_by",
     select: "username",
+  });
+  this.populate({
+    path: "user",
+    select: "_id username firstname lastname role",
   });
   next();
 });

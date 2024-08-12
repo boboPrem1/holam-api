@@ -7,6 +7,8 @@ const CustomUtils = require("../../utils/index.js");
 exports.getAllPermissions = async (req, res, next) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
+  const userIn = await req.userIn();
+  queryObj.user = userIn._id;
   try {
     const Permissions = await Permission.find(queryObj)
       .limit(limit * 1)
@@ -27,7 +29,16 @@ exports.getAllPermissions = async (req, res, next) => {
 exports.getPermissionById = async (req, res) => {
   try {
     // get opportunity type by id
-    const permission = await Permission.findById(req.params.id);
+    const userIn = await req.userIn();
+    const permissionSearch = await Permission.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const permission = permissionSearch[0];
     if (!permission)
       return res.status(404).json({
         message: CustomUtils.consts.NOT_FOUND,
@@ -44,6 +55,9 @@ exports.getPermissionById = async (req, res) => {
 exports.createPermission = async (req, res) => {
   const CustomBody = { ...req.body };
   const slug = CustomUtils.slugify(CustomBody.name);
+
+  const userIn = await req.userIn();
+  CustomBody.user = userIn._id;
   try {
     CustomBody.slug = slug;
     // create new opportunity type
@@ -59,7 +73,16 @@ exports.createPermission = async (req, res) => {
 // @Access: Private
 exports.updatePermission = async (req, res) => {
   try {
-    const permission = await Permission.findById(req.params.id);
+    const userIn = await req.userIn();
+    const permissionSearch = await Permission.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const permission = permissionSearch[0];
     if (!permission) {
       return res.status(404).json({ message: "permission not found !" });
     }
@@ -80,7 +103,16 @@ exports.updatePermission = async (req, res) => {
 // @Access: Private
 exports.deletePermission = async (req, res, next) => {
   try {
-    const permission = await Permission.findById(req.params.id);
+    const userIn = await req.userIn();
+    const permissionSearch = await Permission.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const permission = permissionSearch[0];
     if (!permission)
       return res.status(404).json({ message: `permission not found !` });
     await Permission.findByIdAndDelete(req.params.id);

@@ -8,6 +8,8 @@ const CustomUtils = require("../../utils/index.js");
 exports.getAllUserRoles = async (req, res) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
+  const userIn = await req.userIn();
+  queryObj.user = userIn._id;
   try {
     const userRoles = await UserRole.find(queryObj)
       .limit(limit * 1)
@@ -45,7 +47,9 @@ exports.getUserRoleById = async (req, res) => {
 exports.createUserRole = async (req, res) => {
   const CustomBody = { ...req.body };
   const slug = CustomUtils.slugify(CustomBody.name);
-  console.log(slug);
+
+  const userIn = await req.userIn();
+  CustomBody.user = userIn._id;
   try {
     CustomBody.slug = slug;
     const userRole = await UserRole.create(CustomBody);
@@ -61,7 +65,17 @@ exports.createUserRole = async (req, res) => {
 
 exports.updateUserRole = async (req, res) => {
   try {
-    const userRole = await UserRole.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const userRoleSearch = await UserRole.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const userRole = userRoleSearch[0];
     if (!UserRole) {
       return res.status(404).json({ message: CustomUtils.consts.NOT_FOUND });
     }
@@ -80,7 +94,17 @@ exports.updateUserRole = async (req, res) => {
 
 exports.deleteUserRole = async (req, res) => {
   try {
-    const userRole = await UserRole.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const userRoleSearch = await UserRole.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const userRole = userRoleSearch[0];
     if (!userRole) {
       return res.status(404).json({ message: CustomUtils.consts.NOT_FOUND });
     }

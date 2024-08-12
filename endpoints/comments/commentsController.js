@@ -7,6 +7,8 @@ const CustomUtils = require("../../utils/index.js");
 exports.getAllComments = async (req, res, next) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
+  const userIn = await req.userIn();
+  queryObj.user = userIn._id;
   try {
     const comments = await Comment.find(queryObj)
       .limit(limit * 1)
@@ -27,7 +29,17 @@ exports.getAllComments = async (req, res, next) => {
 exports.getCommentById = async (req, res) => {
   try {
     // get comment by id
-    const comment = await Comment.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const commentSearch = await Comment.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const comment = commentSearch[0];
     if (!comment)
       return res.status(404).json({
         message: CustomUtils.consts.NOT_FOUND,
@@ -43,6 +55,8 @@ exports.getCommentById = async (req, res) => {
 exports.createComment = async (req, res) => {
   const CustomBody = { ...req.body };
   const slug = CustomUtils.slugify(CustomBody.name);
+  const userIn = await req.userIn();
+  CustomBody.user = userIn._id;
   try {
     CustomBody.slug = slug;
     // create new comment
@@ -58,7 +72,17 @@ exports.createComment = async (req, res) => {
 // @Access: Private
 exports.updateComment = async (req, res) => {
   try {
-    const comment = await Comment.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const commentSearch = await Comment.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const comment = commentSearch[0];
     if (!comment) {
       return res.status(404).json({ message: "comment not found !" });
     }
@@ -77,8 +101,19 @@ exports.updateComment = async (req, res) => {
 // @Access: Private
 exports.deleteComment = async (req, res, next) => {
   try {
-    const comment = await Comment.findById(req.params.id);
-    if (!comment) return res.status(404).json({ message: `comment not found !` });
+    const userIn = await req.userIn();
+
+    const commentSearch = await Comment.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const comment = commentSearch[0];
+    if (!comment)
+      return res.status(404).json({ message: `comment not found !` });
     await Comment.findByIdAndDelete(req.params.id);
     res.status(200).json({ message: "comment deleted successfully !" });
   } catch (error) {

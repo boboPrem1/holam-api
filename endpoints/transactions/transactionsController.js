@@ -20,6 +20,8 @@ FedaPay.setEnvironment("live");
 exports.getAllTransactions = async (req, res, next) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
+  const userIn = await req.userIn();
+  queryObj.user = userIn._id;
   try {
     const transactions = await Transaction.find(queryObj)
       .limit(limit * 1)
@@ -41,7 +43,17 @@ exports.getTransactionById = async (req, res) => {
   try {
     const user = await req.userIn();
     // get transaction by id
-    let transaction = await Transaction.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const transactionSearch = await Transaction.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const transaction = transactionSearch[0];
     if (!transaction)
       return res.status(404).json({
         message: CustomUtils.consts.NOT_FOUND,
@@ -190,7 +202,17 @@ exports.createTransaction = async (req, res) => {
 // @Access: Private
 exports.updateTransaction = async (req, res) => {
   try {
-    const transaction = await Transaction.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const transactionSearch = await Transaction.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const transaction = transactionSearch[0];
     if (!transaction) {
       return res.status(404).json({ message: "transaction not found !" });
     }
@@ -213,7 +235,17 @@ exports.updateTransaction = async (req, res) => {
 // @Access: Private
 exports.deleteTransaction = async (req, res, next) => {
   try {
-    const transaction = await Transaction.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const transactionSearch = await Transaction.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const transaction = transactionSearch[0];
     if (!transaction)
       return res.status(404).json({ message: `transaction not found !` });
     await Transaction.findByIdAndDelete(req.params.id);

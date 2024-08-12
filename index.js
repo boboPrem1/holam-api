@@ -66,7 +66,7 @@ const origins = process.env.ORIGINS;
 // };
 // Middleware
 //
-const { protect } = require("./endpoints/auth/authController.js");
+const { protect, view_user } = require("./endpoints/auth/authController.js");
 // app.use(
 //   cors({
 //     corsOptions,
@@ -85,6 +85,7 @@ app.use(express.static("public"));
 app.use(API_URL_BASE, authRoutes);
 
 app.use(protect);
+app.use(view_user);
 app.use(API_URL_BASE + "users", userRoutes);
 app.use(API_URL_BASE + "permissions", permissionRoutes);
 app.use(API_URL_BASE + "api_keys", apiKeyRoutes);

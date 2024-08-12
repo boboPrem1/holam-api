@@ -7,6 +7,8 @@ const CustomUtils = require("../../utils/index.js");
 exports.getAllCities = async (req, res, next) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
+  const userIn = await req.userIn();
+  queryObj.user = userIn._id;
   try {
     const cities = await City.find(queryObj)
       .limit(limit * 1)
@@ -27,7 +29,17 @@ exports.getAllCities = async (req, res, next) => {
 exports.getCityById = async (req, res) => {
   try {
     // get city type by id
-    const city = await City.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const citySearch = await City.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const city = citySearch[0];
     if (!city)
       return res.status(404).json({
         message: CustomUtils.consts.NOT_FOUND,
@@ -44,6 +56,8 @@ exports.getCityById = async (req, res) => {
 exports.createCity = async (req, res) => {
   const CustomBody = { ...req.body };
   const slug = CustomUtils.slugify(CustomBody.name);
+  const userIn = await req.userIn();
+  CustomBody.user = userIn._id;
   try {
     CustomBody.slug = slug;
     // create new city type
@@ -59,7 +73,17 @@ exports.createCity = async (req, res) => {
 // @Access: Private
 exports.updateCity = async (req, res) => {
   try {
-    const city = await City.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const citySearch = await City.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const city = citySearch[0];
     if (!city) {
       return res.status(404).json({ message: "city not found !" });
     }
@@ -78,7 +102,17 @@ exports.updateCity = async (req, res) => {
 // @Access: Private
 exports.deleteCity = async (req, res, next) => {
   try {
-    const city = await City.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const citySearch = await City.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const city = citySearch[0];
     if (!city) return res.status(404).json({ message: `city not found !` });
     await City.findByIdAndDelete(req.params.id);
     res.status(200).json({ message: "city deleted successfully !" });

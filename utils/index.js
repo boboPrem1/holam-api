@@ -11,7 +11,7 @@ class CustomUtils {
     TOKEN_KEY: "miam_auth",
     SUCCESS: "Success",
     UNAUTHORIZED: "Unauthorized",
-    EXPIRED_OTP: "Otp Expired",
+    EXPIRED_OTP: "Otp expired or wrong code",
     NOT_LOGGED_IN: "You are not logged in! Please log in to get access.",
     EXISTING_POST_WITH_SOURCE: "Un article existe avec une source identique",
   };
@@ -94,6 +94,7 @@ class CustomUtils {
       "fields",
       "_end",
       "_start",
+      "view_user",
     ];
     excludedFields.forEach((element) => {
       delete queryObj[element];
@@ -128,6 +129,19 @@ class CustomUtils {
     }
     return result;
   }
+
+  static formatDateLong(date) {
+  const options = { 
+    day: 'numeric', 
+    month: 'long', 
+    year: 'numeric', 
+    hour: '2-digit', 
+    minute: '2-digit',
+    hour12: false // Pour le format 24h
+  };
+
+  return new Intl.DateTimeFormat('fr-FR', options).format(date).replace(':', 'hr');
+}
 }
 
 module.exports = CustomUtils;

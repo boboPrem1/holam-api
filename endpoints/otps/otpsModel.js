@@ -3,9 +3,10 @@ const mongoose = require("mongoose");
 const otpSchema = mongoose.Schema(
   {
     user: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: String,
       ref: "User",
       default: "000000000000000000000000",
+      required: true,
     },
     otp: {
       type: String,
@@ -40,7 +41,7 @@ const otpSchema = mongoose.Schema(
 otpSchema.pre(/^find/, function (next) {
   this.populate({
     path: "user",
-    select: "_id role username",
+    select: "_id username firstname lastname role",
   });
   next();
 });

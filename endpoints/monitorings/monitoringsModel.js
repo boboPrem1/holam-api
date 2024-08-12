@@ -4,7 +4,8 @@ const monitoringSchema = mongoose.Schema(
   {
     user: {
       type: String,
-      ref: 'User',
+      ref: "User",
+      default: "000000000000000000000000",
       required: true,
     },
     description: {
@@ -20,7 +21,7 @@ const monitoringSchema = mongoose.Schema(
 monitoringSchema.pre(/^find/, function (next) {
   this.populate({
     path: "user",
-    select: "_id role username",
+    select: "_id username firstname lastname role",
   });
   next();
 });

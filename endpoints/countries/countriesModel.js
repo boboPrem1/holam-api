@@ -2,6 +2,12 @@ const mongoose = require("mongoose");
 
 const countrySchema = mongoose.Schema(
   {
+    user: {
+      type: String,
+      ref: "User",
+      default: "000000000000000000000000",
+      required: true,
+    },
     name: {
       type: String,
       required: true,
@@ -23,13 +29,13 @@ const countrySchema = mongoose.Schema(
 );
 
 // populate response with user
-// countrySchema.pre(/^find/, function (next) {
-//   this.populate({
-//     path: "user",
-//     select: "_id username slug",
-//   });
-//   next();
-// });
+countrySchema.pre(/^find/, function (next) {
+  this.populate({
+    path: "user",
+    select: "_id username slug",
+  });
+  next();
+});
 
 const Country = mongoose.model("Country", countrySchema);
 module.exports = Country;

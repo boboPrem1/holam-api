@@ -7,6 +7,8 @@ const CustomUtils = require("../../utils/index.js");
 exports.getAllCountries = async (req, res, next) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
+  const userIn = await req.userIn();
+  queryObj.user = userIn._id;
   try {
     const countries = await Country.find(queryObj)
       .limit(limit * 1)
@@ -27,7 +29,17 @@ exports.getAllCountries = async (req, res, next) => {
 exports.getCountryById = async (req, res) => {
   try {
     // get country type by id
-    const country = await Country.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const countrySearch = await Country.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const country = countrySearch[0];
     if (!country)
       return res.status(404).json({
         message: CustomUtils.consts.NOT_FOUND,
@@ -44,6 +56,9 @@ exports.getCountryById = async (req, res) => {
 exports.createCountry = async (req, res) => {
   const CustomBody = { ...req.body };
   const slug = CustomUtils.slugify(CustomBody.name);
+
+  const userIn = await req.userIn();
+  CustomBody.user = userIn._id;
   try {
     CustomBody.slug = slug;
     // create new country type
@@ -59,7 +74,17 @@ exports.createCountry = async (req, res) => {
 // @Access: Private
 exports.updateCountry = async (req, res) => {
   try {
-    const country = await Country.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const countrySearch = await Country.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const country = countrySearch[0];
     if (!country) {
       return res.status(404).json({ message: "country not found !" });
     }
@@ -78,8 +103,19 @@ exports.updateCountry = async (req, res) => {
 // @Access: Private
 exports.deleteCountry = async (req, res, next) => {
   try {
-    const country = await Country.findById(req.params.id);
-    if (!country) return res.status(404).json({ message: `country not found !` });
+    const userIn = await req.userIn();
+
+    const countrySearch = await Country.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const country = countrySearch[0];
+    if (!country)
+      return res.status(404).json({ message: `country not found !` });
     await Country.findByIdAndDelete(req.params.id);
     res.status(200).json({ message: "country deleted successfully !" });
   } catch (error) {

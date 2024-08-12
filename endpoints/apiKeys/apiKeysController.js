@@ -7,6 +7,8 @@ const CustomUtils = require("../../utils/index.js");
 exports.getAllApiKeys = async (req, res, next) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
+  const userIn = await req.userIn();
+  queryObj.user = userIn._id;
   try {
     const ApiKeys = await ApiKey.find(queryObj)
       .limit(limit * 1)
@@ -27,7 +29,17 @@ exports.getAllApiKeys = async (req, res, next) => {
 exports.getApiKeyById = async (req, res) => {
   try {
     // get opportunity type by id
-    const apiKey = await ApiKey.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const apiKeySearch = await ApiKey.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const apiKey = apiKeySearch[0];
     if (!apiKey)
       return res.status(404).json({
         message: CustomUtils.consts.NOT_FOUND,
@@ -44,6 +56,9 @@ exports.getApiKeyById = async (req, res) => {
 exports.createApiKey = async (req, res) => {
   const CustomBody = { ...req.body };
   const slug = CustomUtils.slugify(CustomBody.name);
+
+  const userIn = await req.userIn();
+  CustomBody.user = userIn._id;
   try {
     CustomBody.slug = slug;
     let key = "";
@@ -69,7 +84,17 @@ exports.createApiKey = async (req, res) => {
 // @Access: Private
 exports.updateApiKey = async (req, res) => {
   try {
-    const apiKey = await ApiKey.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const apiKeySearch = await ApiKey.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const apiKey = apiKeySearch[0];
     if (!apiKey) {
       return res.status(404).json({ message: "apiKey not found !" });
     }
@@ -88,7 +113,17 @@ exports.updateApiKey = async (req, res) => {
 // @Access: Private
 exports.deleteApiKey = async (req, res, next) => {
   try {
-    const apiKey = await ApiKey.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const apiKeySearch = await ApiKey.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const apiKey = apiKeySearch[0];
     if (!apiKey) return res.status(404).json({ message: `apiKey not found !` });
     await ApiKey.findByIdAndDelete(req.params.id);
     res.status(200).json({ message: "apiKey deleted successfully !" });

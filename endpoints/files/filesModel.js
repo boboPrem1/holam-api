@@ -33,7 +33,7 @@ const fileSchema = mongoose.Schema(
 fileSchema.pre(/^find/, function (next) {
   this.populate({
     path: "user",
-    select: "_id role username",
+    select: "_id username firstname lastname role",
   });
   next();
 });

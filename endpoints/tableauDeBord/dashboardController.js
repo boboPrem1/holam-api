@@ -32,11 +32,40 @@ const now = new Date();
 // @route GET /api/v1/users/me
 // @access Private
 exports.getAllTotaux = async (req, res) => {
+  const userIn = await req.userIn();
+
+  let filterUserDatas = {};
+  let viewingUserDatas = {};
+
+  if (req.viewUser) {
+    const viewed = await req.viewUser();
+    filterUserDatas = {
+      user: {
+        $eq: viewed._id,
+      },
+    };
+  } else if (userIn.role.slug === "super-administrateur") {
+    filterUserDatas = {};
+  } else if (userIn.role.slug === "admin") {
+    filterUserDatas = {};
+  } else {
+    filterUserDatas = {
+      user: {
+        $eq: userIn._id,
+      },
+    };
+  }
+
+
+
   try {
     // users
-    const allUsers = await User.find().count();
+    const allUsers = await User.find({
+      ...filterUserDatas,
+    }).count();
 
     const lastYearUsers = await User.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfYear,
         $lte: now,
@@ -44,6 +73,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastMonthUsers = await User.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfMonth,
         $lte: now,
@@ -51,6 +81,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastWeekUsers = await User.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfWeek,
         $lte: now,
@@ -58,6 +89,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastDayUsers = await User.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfDay,
         $lte: now,
@@ -65,9 +97,12 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     // Otps
-    const allOtps = await Otp.find().count();
+    const allOtps = await Otp.find({
+      ...filterUserDatas,
+    }).count();
 
     const lastYearOtps = await Otp.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfYear,
         $lte: now,
@@ -75,6 +110,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastMonthOtps = await Otp.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfMonth,
         $lte: now,
@@ -82,6 +118,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastWeekOtps = await Otp.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfWeek,
         $lte: now,
@@ -89,6 +126,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastDayOtps = await Otp.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfDay,
         $lte: now,
@@ -96,9 +134,12 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     // UserRoles
-    const allUserRoles = await UserRole.find().count();
+    const allUserRoles = await UserRole.find({
+      ...filterUserDatas,
+    }).count();
 
     const lastYearUserRoles = await UserRole.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfYear,
         $lte: now,
@@ -106,6 +147,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastMonthUserRoles = await UserRole.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfMonth,
         $lte: now,
@@ -113,6 +155,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastWeekUserRoles = await UserRole.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfWeek,
         $lte: now,
@@ -120,6 +163,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastDayUserRoles = await UserRole.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfDay,
         $lte: now,
@@ -127,9 +171,12 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     // Permissions
-    const allPermissions = await Permission.find().count();
+    const allPermissions = await Permission.find({
+      ...filterUserDatas,
+    }).count();
 
     const lastYearPermissions = await Permission.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfYear,
         $lte: now,
@@ -137,6 +184,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastMonthPermissions = await Permission.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfMonth,
         $lte: now,
@@ -144,6 +192,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastWeekPermissions = await Permission.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfWeek,
         $lte: now,
@@ -151,6 +200,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastDayPermissions = await Permission.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfDay,
         $lte: now,
@@ -158,9 +208,12 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     // ApiKeys
-    const allApiKeys = await ApiKey.find().count();
+    const allApiKeys = await ApiKey.find({
+      ...filterUserDatas,
+    }).count();
 
     const lastYearApiKeys = await ApiKey.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfYear,
         $lte: now,
@@ -168,6 +221,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastMonthApiKeys = await ApiKey.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfMonth,
         $lte: now,
@@ -175,6 +229,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastWeekApiKeys = await ApiKey.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfWeek,
         $lte: now,
@@ -182,6 +237,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastDayApiKeys = await ApiKey.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfDay,
         $lte: now,
@@ -190,94 +246,115 @@ exports.getAllTotaux = async (req, res) => {
 
     // SigActivities
     const allSigActivities = await Activity.find({
+      ...filterUserDatas,
       type: {
-        $eq: "reporting"
-      }
+        $eq: "reporting",
+      },
     }).count();
 
     const lastYearSigActivities = await Activity.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfYear,
         $lte: now,
-      },type: {
-        $eq: "reporting"
-      }
+      },
+      type: {
+        $eq: "reporting",
+      },
     }).count();
 
     const lastMonthSigActivities = await Activity.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfMonth,
         $lte: now,
-      },type: {
-        $eq: "reporting"
-      }
+      },
+      type: {
+        $eq: "reporting",
+      },
     }).count();
 
     const lastWeekSigActivities = await Activity.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfWeek,
         $lte: now,
-      },type: {
-        $eq: "reporting"
-      }
+      },
+      type: {
+        $eq: "reporting",
+      },
     }).count();
 
     const lastDaySigActivities = await Activity.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfDay,
         $lte: now,
-      },type: {
-        $eq: "reporting"
-      }
+      },
+      type: {
+        $eq: "reporting",
+      },
     }).count();
 
     // SugActivities
     const allSugActivities = await Activity.find({
+      ...filterUserDatas,
       type: {
-        $eq: "suggestion"
-      }
+        $eq: "suggestion",
+      },
     }).count();
 
     const lastYearSugActivities = await Activity.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfYear,
         $lte: now,
-      },type: {
-        $eq: "suggestion"
-      }
+      },
+      type: {
+        $eq: "suggestion",
+      },
     }).count();
 
     const lastMonthSugActivities = await Activity.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfMonth,
         $lte: now,
-      },type: {
-        $eq: "suggestion"
-      }
+      },
+      type: {
+        $eq: "suggestion",
+      },
     }).count();
 
     const lastWeekSugActivities = await Activity.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfWeek,
         $lte: now,
-      },type: {
-        $eq: "suggestion"
-      }
+      },
+      type: {
+        $eq: "suggestion",
+      },
     }).count();
 
     const lastDaySugActivities = await Activity.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfDay,
         $lte: now,
-      },type: {
-        $eq: "suggestion"
-      }
+      },
+      type: {
+        $eq: "suggestion",
+      },
     }).count();
 
     // ActivityCategories
-    const allActivityCategories = await ActivityCategory.find().count();
+    const allActivityCategories = await ActivityCategory.find({
+      ...filterUserDatas,
+    }).count();
 
     const lastYearActivityCategories = await ActivityCategory.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfYear,
         $lte: now,
@@ -285,6 +362,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastMonthActivityCategories = await ActivityCategory.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfMonth,
         $lte: now,
@@ -292,6 +370,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastWeekActivityCategories = await ActivityCategory.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfWeek,
         $lte: now,
@@ -299,6 +378,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastDayActivityCategories = await ActivityCategory.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfDay,
         $lte: now,
@@ -306,9 +386,12 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     // ActivitySubCategories
-    const allActivitySubCategories = await ActivitySubCategory.find().count();
+    const allActivitySubCategories = await ActivitySubCategory.find({
+      ...filterUserDatas,
+    }).count();
 
     const lastYearActivitySubCategories = await ActivitySubCategory.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfYear,
         $lte: now,
@@ -316,6 +399,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastMonthActivitySubCategories = await ActivitySubCategory.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfMonth,
         $lte: now,
@@ -323,6 +407,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastWeekActivitySubCategories = await ActivitySubCategory.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfWeek,
         $lte: now,
@@ -330,6 +415,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastDayActivitySubCategories = await ActivitySubCategory.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfDay,
         $lte: now,
@@ -337,9 +423,12 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     // ApiKeys
-    const allVideos = await Video.find().count();
+    const allVideos = await Video.find({
+      ...filterUserDatas,
+    }).count();
 
     const lastYearVideos = await Video.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfYear,
         $lte: now,
@@ -347,6 +436,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastMonthVideos = await Video.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfMonth,
         $lte: now,
@@ -354,6 +444,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastWeekVideos = await Video.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfWeek,
         $lte: now,
@@ -361,6 +452,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastDayVideos = await Video.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfDay,
         $lte: now,
@@ -368,9 +460,12 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     // Courses
-    const allCourses = await Course.find().count();
+    const allCourses = await Course.find({
+      ...filterUserDatas,
+    }).count();
 
     const lastYearCourses = await Course.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfYear,
         $lte: now,
@@ -378,6 +473,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastMonthCourses = await Course.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfMonth,
         $lte: now,
@@ -385,6 +481,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastWeekCourses = await Course.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfWeek,
         $lte: now,
@@ -392,6 +489,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastDayCourses = await Course.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfDay,
         $lte: now,
@@ -399,9 +497,12 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     // Countries
-    const allCountries = await Country.find().count();
+    const allCountries = await Country.find({
+      ...filterUserDatas,
+    }).count();
 
     const lastYearCountries = await Country.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfYear,
         $lte: now,
@@ -409,6 +510,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastMonthCountries = await Country.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfMonth,
         $lte: now,
@@ -416,6 +518,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastWeekCountries = await Country.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfWeek,
         $lte: now,
@@ -423,6 +526,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastDayCountries = await Country.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfDay,
         $lte: now,
@@ -430,9 +534,12 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     // Cities
-    const allCities = await City.find().count();
+    const allCities = await City.find({
+      ...filterUserDatas,
+    }).count();
 
     const lastYearCities = await City.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfYear,
         $lte: now,
@@ -440,6 +547,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastMonthCities = await City.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfMonth,
         $lte: now,
@@ -447,6 +555,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastWeekCities = await City.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfWeek,
         $lte: now,
@@ -454,6 +563,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastDayCities = await City.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfDay,
         $lte: now,
@@ -461,9 +571,12 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     // Services
-    const allServices = await GeolocationService.find().count();
+    const allServices = await GeolocationService.find({
+      ...filterUserDatas,
+    }).count();
 
     const lastYearServices = await GeolocationService.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfYear,
         $lte: now,
@@ -471,6 +584,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastMonthServices = await GeolocationService.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfMonth,
         $lte: now,
@@ -478,6 +592,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastWeekServices = await GeolocationService.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfWeek,
         $lte: now,
@@ -485,6 +600,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastDayServices = await GeolocationService.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfDay,
         $lte: now,
@@ -492,9 +608,12 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     // Masters
-    const allMasters = await GeolocationServiceMaster.find().count();
+    const allMasters = await GeolocationServiceMaster.find({
+      ...filterUserDatas,
+    }).count();
 
     const lastYearMasters = await GeolocationServiceMaster.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfYear,
         $lte: now,
@@ -502,6 +621,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastMonthMasters = await GeolocationServiceMaster.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfMonth,
         $lte: now,
@@ -509,6 +629,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastWeekMasters = await GeolocationServiceMaster.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfWeek,
         $lte: now,
@@ -516,6 +637,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastDayMasters = await GeolocationServiceMaster.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfDay,
         $lte: now,
@@ -523,9 +645,12 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     // Agents
-    const allAgents = await GeolocationServiceAgent.find().count();
+    const allAgents = await GeolocationServiceAgent.find({
+      ...filterUserDatas,
+    }).count();
 
     const lastYearAgents = await GeolocationServiceAgent.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfYear,
         $lte: now,
@@ -533,6 +658,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastMonthAgents = await GeolocationServiceAgent.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfMonth,
         $lte: now,
@@ -540,6 +666,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastWeekAgents = await GeolocationServiceAgent.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfWeek,
         $lte: now,
@@ -547,6 +674,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastDayAgents = await GeolocationServiceAgent.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfDay,
         $lte: now,
@@ -554,9 +682,12 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     // Clients
-    const allClients = await GeolocationServiceClient.find().count();
+    const allClients = await GeolocationServiceClient.find({
+      ...filterUserDatas,
+    }).count();
 
     const lastYearClients = await GeolocationServiceClient.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfYear,
         $lte: now,
@@ -564,6 +695,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastMonthClients = await GeolocationServiceClient.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfMonth,
         $lte: now,
@@ -571,6 +703,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastWeekClients = await GeolocationServiceClient.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfWeek,
         $lte: now,
@@ -578,6 +711,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastDayClients = await GeolocationServiceClient.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfDay,
         $lte: now,
@@ -585,9 +719,12 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     // GeoTransactions
-    const allGeoTransactions = await GeolocationServiceTransaction.find().count();
+    const allGeoTransactions = await GeolocationServiceTransaction.find({
+      ...filterUserDatas,
+    }).count();
 
     const lastYearGeoTransactions = await GeolocationServiceTransaction.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfYear,
         $lte: now,
@@ -595,6 +732,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastMonthGeoTransactions = await GeolocationServiceTransaction.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfMonth,
         $lte: now,
@@ -602,6 +740,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastWeekGeoTransactions = await GeolocationServiceTransaction.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfWeek,
         $lte: now,
@@ -609,6 +748,7 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     const lastDayGeoTransactions = await GeolocationServiceTransaction.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfDay,
         $lte: now,
@@ -616,10 +756,13 @@ exports.getAllTotaux = async (req, res) => {
     }).count();
 
     // Points
-    const allPoints = await GeolocationServicePoint.find();
+    const allPoints = await GeolocationServicePoint.find({
+      ...filterUserDatas,
+    });
     const allPointsLength = allPoints.length;
 
     const lastYearPoints = await GeolocationServicePoint.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfYear,
         $lte: now,
@@ -628,6 +771,7 @@ exports.getAllTotaux = async (req, res) => {
     const lastYearPointsLength = lastYearPoints.length;
 
     const lastMonthPoints = await GeolocationServicePoint.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfMonth,
         $lte: now,
@@ -636,6 +780,7 @@ exports.getAllTotaux = async (req, res) => {
     const lastMonthPointsLength = lastMonthPoints.length;
 
     const lastWeekPoints = await GeolocationServicePoint.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfWeek,
         $lte: now,
@@ -644,14 +789,17 @@ exports.getAllTotaux = async (req, res) => {
     const lastWeekPointsLength = lastWeekPoints.length;
 
     const lastDayPoints = await GeolocationServicePoint.find({
+      ...filterUserDatas,
       createdAt: {
         $gte: startOfDay,
         $lte: now,
       },
     });
     const lastDayPointsLength = lastDayPoints.length;
-    
-    const monitorings = await Monitoring.find();
+
+    const monitorings = await Monitoring.find({
+      ...filterUserDatas,
+    });
 
     res.status(200).json({
       user: req.user,
@@ -784,26 +932,26 @@ exports.getAllTotaux = async (req, res) => {
       points: {
         all: {
           data: allPoints,
-          length: allPointsLength
+          length: allPointsLength,
         },
         year: {
           data: lastYearPoints,
-          length: lastYearPointsLength
+          length: lastYearPointsLength,
         },
         month: {
           data: lastMonthPoints,
-          length: lastMonthPointsLength
+          length: lastMonthPointsLength,
         },
         week: {
           data: lastWeekPoints,
-          length: lastWeekPointsLength
+          length: lastWeekPointsLength,
         },
         day: {
           data: lastDayPoints,
-          length: lastDayPointsLength
+          length: lastDayPointsLength,
         },
       },
-      monitorings
+      monitorings,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

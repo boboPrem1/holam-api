@@ -7,8 +7,12 @@ const CustomUtils = require("../../utils/index.js");
 exports.getAllGeolocationServicePoints = async (req, res, next) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
+  const userIn = await req.userIn();
+  queryObj.user = userIn._id;
   try {
-    const geolocationServicePoints = await GeolocationServicePoint.find(queryObj)
+    const geolocationServicePoints = await GeolocationServicePoint.find(
+      queryObj
+    )
       .limit(limit * 1)
       .sort({
         createdAt: -1,
@@ -27,7 +31,17 @@ exports.getAllGeolocationServicePoints = async (req, res, next) => {
 exports.getGeolocationServicePointById = async (req, res) => {
   try {
     // get geolocationServicePoint by id
-    const geolocationServicePoint = await GeolocationServicePoint.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const geolocationServicePointSearch = await GeolocationServicePoint.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const geolocationServicePoint = geolocationServicePointSearch[0];
     if (!geolocationServicePoint)
       return res.status(404).json({
         message: CustomUtils.consts.NOT_FOUND,
@@ -44,10 +58,15 @@ exports.getGeolocationServicePointById = async (req, res) => {
 exports.createGeolocationServicePoint = async (req, res) => {
   const CustomBody = { ...req.body };
   const slug = CustomUtils.slugify(CustomBody.name);
+
+  const userIn = await req.userIn();
+  CustomBody.user = userIn._id;
   try {
     CustomBody.slug = slug;
-    // create new geolocationServicePoint     
-    const geolocationServicePoint = await GeolocationServicePoint.create(CustomBody);
+    // create new geolocationServicePoint
+    const geolocationServicePoint = await GeolocationServicePoint.create(
+      CustomBody
+    );
     res.status(201).json(geolocationServicePoint);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -59,14 +78,30 @@ exports.createGeolocationServicePoint = async (req, res) => {
 // @Access: Private
 exports.updateGeolocationServicePoint = async (req, res) => {
   try {
-    const geolocationServicePoint = await GeolocationServicePoint.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const geolocationServicePointSearch = await GeolocationServicePoint.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const geolocationServicePoint = geolocationServicePointSearch[0];
     if (!geolocationServicePoint) {
-      return res.status(404).json({ message: "geolocationServicePoint not found !" });
+      return res
+        .status(404)
+        .json({ message: "geolocationServicePoint not found !" });
     }
 
-    const updated = await GeolocationServicePoint.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
+    const updated = await GeolocationServicePoint.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      {
+        new: true,
+      }
+    );
     return res.status(200).json(updated);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -78,10 +113,25 @@ exports.updateGeolocationServicePoint = async (req, res) => {
 // @Access: Private
 exports.deleteGeolocationServicePoint = async (req, res, next) => {
   try {
-    const geolocationServicePoint = await GeolocationServicePoint.findById(req.params.id);
-    if (!geolocationServicePoint) return res.status(404).json({ message: `geolocationServicePoint not found !` });
+    const userIn = await req.userIn();
+
+    const geolocationServicePointSearch = await GeolocationServicePoint.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const geolocationServicePoint = geolocationServicePointSearch[0];
+    if (!geolocationServicePoint)
+      return res
+        .status(404)
+        .json({ message: `geolocationServicePoint not found !` });
     await GeolocationServicePoint.findByIdAndDelete(req.params.id);
-    res.status(200).json({ message: "geolocationServicePoint deleted successfully !" });
+    res
+      .status(200)
+      .json({ message: "geolocationServicePoint deleted successfully !" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

@@ -7,6 +7,8 @@ const CustomUtils = require("../../utils/index.js");
 exports.getAllFiles = async (req, res, next) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
+  const userIn = await req.userIn();
+  queryObj.user = userIn._id;
   try {
     const files = await File.find(queryObj)
       .limit(limit * 1)
@@ -27,7 +29,17 @@ exports.getAllFiles = async (req, res, next) => {
 exports.getFileById = async (req, res) => {
   try {
     // get file type by id
-    const file = await File.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const fileSearch = await File.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const file = fileSearch[0];
     if (!file)
       return res.status(404).json({
         message: CustomUtils.consts.NOT_FOUND,
@@ -44,6 +56,9 @@ exports.getFileById = async (req, res) => {
 exports.createFile = async (req, res) => {
   const CustomBody = { ...req.body };
   const slug = CustomUtils.slugify(CustomBody.name);
+
+  const userIn = await req.userIn();
+  CustomBody.user = userIn._id;
   try {
     CustomBody.slug = slug;
     // create new file type
@@ -59,7 +74,17 @@ exports.createFile = async (req, res) => {
 // @Access: Private
 exports.updateFile = async (req, res) => {
   try {
-    const file = await File.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const fileSearch = await File.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const file = fileSearch[0];
     if (!file) {
       return res.status(404).json({ message: "file not found !" });
     }
@@ -78,7 +103,17 @@ exports.updateFile = async (req, res) => {
 // @Access: Private
 exports.deleteFile = async (req, res, next) => {
   try {
-    const file = await File.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const fileSearch = await File.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const file = fileSearch[0];
     if (!file) return res.status(404).json({ message: `file not found !` });
     await File.findByIdAndDelete(req.params.id);
     res.status(200).json({ message: "file deleted successfully !" });

@@ -3,9 +3,10 @@ const mongoose = require("mongoose");
 const notificationSchema = mongoose.Schema(
   {
     user: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: String,
       ref: "User",
       default: "000000000000000000000000",
+      required: true,
     },
     description: {
       type: String,
@@ -50,7 +51,7 @@ const notificationSchema = mongoose.Schema(
 notificationSchema.pre(/^find/, function (next) {
   this.populate({
     path: "user",
-    select: "_id role username",
+    select: "_id username firstname lastname role",
   });
   this.populate({
     path: "initiator",

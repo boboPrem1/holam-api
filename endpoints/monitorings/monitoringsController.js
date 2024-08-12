@@ -7,6 +7,8 @@ const CustomUtils = require("../../utils/index.js");
 exports.getAllMonitorings = async (req, res, next) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
+  const userIn = await req.userIn();
+  queryObj.user = userIn._id;
   try {
     const monitorings = await Monitoring.find(queryObj)
       .limit(limit * 1)
@@ -27,7 +29,17 @@ exports.getAllMonitorings = async (req, res, next) => {
 exports.getMonitoringById = async (req, res) => {
   try {
     // get monitoring by id
-    const monitoring = await Monitoring.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const monitoringSearch = await ActivitySubCategory.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const monitoring = monitoringSearch[0];
     if (!monitoring)
       return res.status(404).json({
         message: CustomUtils.consts.NOT_FOUND,
@@ -44,6 +56,9 @@ exports.getMonitoringById = async (req, res) => {
 exports.createMonitoring = async (req, res) => {
   const CustomBody = { ...req.body };
   const slug = CustomUtils.slugify(CustomBody.name);
+
+  const userIn = await req.userIn();
+  CustomBody.user = userIn._id;
   try {
     CustomBody.slug = slug;
     // create new monitoring
@@ -59,14 +74,28 @@ exports.createMonitoring = async (req, res) => {
 // @Access: Private
 exports.updateMonitoring = async (req, res) => {
   try {
-    const monitoring = await Monitoring.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const monitoringSearch = await ActivitySubCategory.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const monitoring = monitoringSearch[0];
     if (!monitoring) {
       return res.status(404).json({ message: "monitoring not found !" });
     }
 
-    const updated = await Monitoring.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
+    const updated = await Monitoring.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      {
+        new: true,
+      }
+    );
     return res.status(200).json(updated);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -76,10 +105,21 @@ exports.updateMonitoring = async (req, res) => {
 // @Delete monitoring by id
 // @Route: /api/v1/monitorings/:id
 // @Access: Private
-exports.deleteMonitoring = async (req, res, next) => {
+exports.deleteMonitoring = async (req, res) => {
   try {
-    const monitoring = await Monitoring.findById(req.params.id);
-    if (!monitoring) return res.status(404).json({ message: `monitoring not found !` });
+    const userIn = await req.userIn();
+
+    const monitoringSearch = await ActivitySubCategory.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const monitoring = monitoringSearch[0];
+    if (!monitoring)
+      return res.status(404).json({ message: `monitoring not found !` });
     await Monitoring.findByIdAndDelete(req.params.id);
     res.status(200).json({ message: "monitoring deleted successfully !" });
   } catch (error) {

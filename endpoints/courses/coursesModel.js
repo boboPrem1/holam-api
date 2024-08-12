@@ -2,6 +2,11 @@ const mongoose = require("mongoose");
 
 const courseSchema = mongoose.Schema(
   {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: "000000000000000000000000",
+    },
     title: {
       type: String,
     },
@@ -11,7 +16,7 @@ const courseSchema = mongoose.Schema(
     creator: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      default: "000000000000000000000000"
+      default: "000000000000000000000000",
     },
     videos: {
       type: [mongoose.Schema.Types.ObjectId],
@@ -37,8 +42,8 @@ const courseSchema = mongoose.Schema(
 // populate response with user
 courseSchema.pre(/^find/, function (next) {
   this.populate({
-    path: "creator",
-    select: "_id role",
+    path: "user",
+    select: "_id username firstname lastname role",
   });
   this.populate({
     path: "videos",

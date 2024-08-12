@@ -7,6 +7,8 @@ const CustomUtils = require("../../utils/index.js");
 exports.getAllOtps = async (req, res, next) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
+  const userIn = await req.userIn();
+  queryObj.user = userIn._id;
   try {
     const Otps = await Otp.find(queryObj)
       .limit(limit * 1)
@@ -27,7 +29,17 @@ exports.getAllOtps = async (req, res, next) => {
 exports.getOtpById = async (req, res) => {
   try {
     // get otp type by id
-    const otp = await Otp.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const otpSearch = await Otp.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const otp = otpSearch[0];
     if (!otp)
       return res.status(404).json({
         message: CustomUtils.consts.NOT_FOUND,
@@ -45,6 +57,7 @@ exports.createOtp = async (req, res) => {
   const userConnected = req.user;
   // const CustomBody = { ...req.body };
   // const slug = CustomUtils.slugify(CustomBody.name);
+  const userIn = await req.userIn();
   try {
     // CustomBody.slug = slug;
     // // create new otp type
@@ -63,9 +76,9 @@ exports.createOtp = async (req, res) => {
       existingOtp = await Otp.find({
         otp: { $eq: randomNumber },
       });
-    } 
+    }
     const otp = await Otp.create({
-      user:"662564595b169730d92a737e",
+      user: userIn._id,
       otp: randomNumber,
       exp: endingDate,
     });
@@ -80,7 +93,17 @@ exports.createOtp = async (req, res) => {
 // @Access: Private
 exports.updateOtp = async (req, res) => {
   try {
-    const otp = await Otp.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const otpSearch = await Otp.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const otp = otpSearch[0];
     if (!otp) {
       return res.status(404).json({ message: "otp not found !" });
     }
@@ -99,7 +122,17 @@ exports.updateOtp = async (req, res) => {
 // @Access: Private
 exports.deleteOtp = async (req, res, next) => {
   try {
-    const otp = await Otp.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const otpSearch = await Otp.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const otp = otpSearch[0];
     if (!otp) return res.status(404).json({ message: `otp not found !` });
     await Otp.findByIdAndDelete(req.params.id);
     res.status(200).json({ message: "otp deleted successfully !" });

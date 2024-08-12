@@ -2,6 +2,12 @@ const mongoose = require("mongoose");
 
 const chatSchema = mongoose.Schema(
   {
+    user: {
+      type: String,
+      ref: "User",
+      default: "000000000000000000000000",
+      required: true,
+    },
     members: {
       type: [mongoose.Schema.Types.ObjectId],
       ref: "User",
@@ -45,6 +51,10 @@ chatSchema.pre(/^find/, function (next) {
   this.populate({
     path: "lastMessage",
     select: "sender content",
+  });
+  this.populate({
+    path: "user",
+    select: "_id username firstname lastname role",
   });
   next();
 });

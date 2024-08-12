@@ -32,7 +32,7 @@ geolocationServiceAgentSchema.pre(/^find/, function (next) {
   });
   this.populate({
     path: "user",
-    select: "username role",
+    select: "_id username firstname lastname role",
   });
   this.populate({
     path: "otp",
@@ -41,5 +41,8 @@ geolocationServiceAgentSchema.pre(/^find/, function (next) {
   next();
 });
 
-const GeolocationServiceAgent = mongoose.model("GeolocationServiceAgent", geolocationServiceAgentSchema);
+const GeolocationServiceAgent = mongoose.model(
+  "GeolocationServiceAgent",
+  geolocationServiceAgentSchema
+);
 module.exports = GeolocationServiceAgent;

@@ -23,7 +23,7 @@ const geolocationServiceMasterSchema = mongoose.Schema(
 geolocationServiceMasterSchema.pre(/^find/, function (next) {
   this.populate({
     path: "user",
-    select: "username firstname lastname role",
+    select: "_id username firstname lastname role",
   });
   this.populate({
     path: "service",

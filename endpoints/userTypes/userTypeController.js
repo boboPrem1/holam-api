@@ -7,6 +7,8 @@ const CustomUtils = require("../../utils/index.js");
 exports.getAllUserTypes = async (req, res) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
+  const userIn = await req.userIn();
+  queryObj.user = userIn._id;
   try {
     const userTypes = await UserType.find(queryObj)
       .limit(limit * 1)
@@ -26,7 +28,17 @@ exports.getAllUserTypes = async (req, res) => {
 // @access Public
 exports.getUserTypeById = async (req, res) => {
   try {
-    const userType = await UserType.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const userTypeSearch = await UserType.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const userType = userTypeSearch[0];
     if (!userType)
       return res.status(404).json({ message: CustomUtils.consts.NOT_EXIST });
     res.status(200).json(userType);
@@ -41,6 +53,9 @@ exports.getUserTypeById = async (req, res) => {
 exports.createUserType = async (req, res) => {
   const CustomBody = { ...req.body };
   const slug = CustomUtils.slugify(CustomBody.name);
+
+  const userIn = await req.userIn();
+  CustomBody.user = userIn._id;
   try {
     CustomBody.slug = slug;
     const newuserType = await UserType.create(CustomBody);
@@ -55,7 +70,17 @@ exports.createUserType = async (req, res) => {
 // @access Public
 exports.updateUserTypeById = async (req, res) => {
   try {
-    const userType = await UserType.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const userTypeSearch = await UserType.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const userType = userTypeSearch[0];
     if (!userType)
       return res.status(404).json({ message: CustomUtils.consts.NOT_EXIST });
 
@@ -73,7 +98,17 @@ exports.updateUserTypeById = async (req, res) => {
 // @access Public
 exports.deleteUserTypeById = async (req, res) => {
   try {
-    const userType = await UserType.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const userTypeSearch = await UserType.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const userType = userTypeSearch[0];
     if (!userType)
       return res.status(404).json({ message: CustomUtils.consts.NOT_EXIST });
     await UserType.findByIdAndDelete(req.params.id);

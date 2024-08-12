@@ -7,6 +7,8 @@ const CustomUtils = require("../../utils/index.js");
 exports.getAllGeolocationServices = async (req, res) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
+  const userIn = await req.userIn();
+  queryObj.user = userIn._id;
   try {
     const geolocationServices = await GeolocationService.find(queryObj)
       .limit(limit * 1)
@@ -26,7 +28,17 @@ exports.getAllGeolocationServices = async (req, res) => {
 // @access Public
 exports.getGeolocationServiceById = async (req, res) => {
   try {
-    const geolocationService = await GeolocationService.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const geolocationServiceSearch = await GeolocationService.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const geolocationService = geolocationServiceSearch[0];
     if (!geolocationService)
       return res.status(404).json({ message: CustomUtils.consts.NOT_EXIST });
     res.status(200).json(geolocationService);
@@ -41,6 +53,9 @@ exports.getGeolocationServiceById = async (req, res) => {
 exports.createGeolocationService = async (req, res) => {
   const CustomBody = { ...req.body };
   const slug = CustomUtils.slugify(CustomBody.name);
+
+  const userIn = await req.userIn();
+  CustomBody.user = userIn._id;
   try {
     CustomBody.slug = slug;
     const newgeolocationService = await GeolocationService.create(CustomBody);
@@ -55,13 +70,27 @@ exports.createGeolocationService = async (req, res) => {
 // @access Public
 exports.updateGeolocationServiceById = async (req, res) => {
   try {
-    const geolocationService = await GeolocationService.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const geolocationServiceSearch = await ActivitySubCategory.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const geolocationService = geolocationServiceSearch[0];
     if (!geolocationService)
       return res.status(404).json({ message: CustomUtils.consts.NOT_EXIST });
 
-    const updated = await GeolocationService.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
+    const updated = await GeolocationService.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      {
+        new: true,
+      }
+    );
     return res.status(200).json(updated);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -73,7 +102,17 @@ exports.updateGeolocationServiceById = async (req, res) => {
 // @access Public
 exports.deleteGeolocationServiceById = async (req, res) => {
   try {
-    const geolocationService = await GeolocationService.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const geolocationServiceSearch = await ActivitySubCategory.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const geolocationService = geolocationServiceSearch[0];
     if (!geolocationService)
       return res.status(404).json({ message: CustomUtils.consts.NOT_EXIST });
     await GeolocationService.findByIdAndDelete(req.params.id);

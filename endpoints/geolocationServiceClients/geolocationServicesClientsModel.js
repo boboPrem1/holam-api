@@ -17,7 +17,7 @@ const geolocationServiceClientSchema = mongoose.Schema(
     },
     description: {
       type: String,
-      default: ""
+      default: "",
     },
     master: {
       type: mongoose.Schema.Types.ObjectId,
@@ -35,7 +35,7 @@ const geolocationServiceClientSchema = mongoose.Schema(
 geolocationServiceClientSchema.pre(/^find/, function (next) {
   this.populate({
     path: "user",
-    select: "username firstname lastname role",
+    select: "_id username firstname lastname role",
   });
   this.populate({
     path: "master",

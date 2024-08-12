@@ -7,6 +7,8 @@ const CustomUtils = require("../../utils/index.js");
 exports.getAllNotifications = async (req, res, next) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
+  const userIn = await req.userIn();
+  queryObj.user = userIn._id;
   try {
     const notifications = await Notification.find(queryObj)
       .limit(limit * 1)
@@ -27,7 +29,17 @@ exports.getAllNotifications = async (req, res, next) => {
 exports.getNotificationById = async (req, res) => {
   try {
     // get notification by id
-    const notification = await Notification.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const notificationSearch = await Notification.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const notification = notificationSearch[0];
     if (!notification)
       return res.status(404).json({
         message: CustomUtils.consts.NOT_FOUND,
@@ -43,6 +55,9 @@ exports.getNotificationById = async (req, res) => {
 exports.createNotification = async (req, res) => {
   const CustomBody = { ...req.body };
   const slug = CustomUtils.slugify(CustomBody.name);
+
+  const userIn = await req.userIn();
+  CustomBody.user = userIn._id;
   try {
     CustomBody.slug = slug;
     // create new notification     
@@ -58,7 +73,17 @@ exports.createNotification = async (req, res) => {
 // @Access: Private
 exports.updateNotification = async (req, res) => {
   try {
-    const notification = await Notification.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const notificationSearch = await Notification.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const notification = notificationSearch[0];
     if (!notification) {
       return res.status(404).json({ message: "notification not found !" });
     }
@@ -77,7 +102,17 @@ exports.updateNotification = async (req, res) => {
 // @Access: Private
 exports.deleteNotification = async (req, res, next) => {
   try {
-    const notification = await Notification.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const notificationSearch = await Notification.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const notification = notificationSearch[0];
     if (!notification) return res.status(404).json({ message: `notification not found !` });
     await Notification.findByIdAndDelete(req.params.id);
     res.status(200).json({ message: "notification deleted successfully !" });

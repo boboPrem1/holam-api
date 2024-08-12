@@ -71,7 +71,7 @@ exports.sign = async (req, res, next) => {
     });
     const beginningDate = new Date();
     const endingDate = new Date(beginningDate);
-    endingDate.setDate(beginningDate.getDate() + 10);
+    endingDate.setDate(beginningDate.getDate() + 1);
 
     while (existingOtp.length) {
       randomNumber = CustomUtils.getRandomNbr();
@@ -86,7 +86,9 @@ exports.sign = async (req, res, next) => {
     });
 
     const params = {
-      Message: `Your OTP is: ${otp.otp}`,
+      Message: `Votre OTP est: ${otp.otp},
+      il est valide jusaqu'au ${CustomUtils.formatDateLong(otp.exp)},
+      gardez le secret. Avec HOLAM, des villes plus sûres.`,
       PhoneNumber: indicatif + "" + number,
       MessageAttributes: {
         "AWS.SNS.SMS.SenderID": {
@@ -125,6 +127,7 @@ exports.verifyOtp = async (req, res, next) => {
         { status: "expired" },
         { new: true }
       );
+      return res.status(403).json({ message: CustomUtils.consts.EXPIRED_OTP });
     } else {
       otpFound = await Otp.findByIdAndUpdate(
         otpFound._id,
@@ -219,10 +222,12 @@ exports.signinWithTel = async (req, res, next) => {
       "phone.indicatif": { $eq: indicatif },
       "phone.number": { $eq: number },
     }).select("+password");
-    //console.log(user);
+    // console.log(user);
 
     if (!user || !(await user.comparePassword(password))) {
-      return res.status(401).json({ message: CustomUtils.consts.UNAUTHORIZED });
+      return res
+        .status(401)
+        .json({ message: "Identifiant ou mot de passe incorrect !" });
     } else {
       // If everything ok, send token to client
       // req.user = user;
@@ -361,7 +366,7 @@ exports.protect = async (req, res, next) => {
     // GRANT ACCESS TO PROTECTED ROUTE
     req.user = currentUser;
     req.userIn = async () => {
-      const userIn = await User.findById(req.user);
+      const userIn = await User.findById(req.user.id);
       return userIn;
     };
     // console.log(req);
@@ -370,6 +375,27 @@ exports.protect = async (req, res, next) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
+};
+
+exports.view_user = async (req, res, next) => {
+  const CustomBody = req.body;
+  const CustomQuery = req.query;
+  if (CustomBody.view_user) {
+    req.viewUser = async () => {
+      return await User.findById(CustomBody.view_user);
+    };
+    delete req.body.view_user;
+
+    console.log(req.body);
+  } else if (CustomQuery.view_user) {
+    req.viewUser = async () => {
+      return await User.findById(CustomQuery.view_user);
+    };
+    delete req.body.view_user;
+
+    // console.log(req.body);
+  }
+  next();
 };
 
 exports.restrictTo = (...roles) => {

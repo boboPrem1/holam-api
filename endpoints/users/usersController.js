@@ -17,12 +17,46 @@ exports.getMe = async (req, res) => {
   }
 };
 
+// @Post me
+// @route GET /api/v1/users/view-user
+// @access Private
+exports.viewUser = async (req, res) => {
+  const CustomBody = req.body;
+  try {
+    const userIn = await req.userIn();
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      req.viewUser = async () => {
+        return await User.findById(CustomBody.user);
+      };
+
+      if (!CustomBody.user)
+        return res
+          .status(400)
+          .json({ message: CustomUtils.consts.MISSING_DATA });
+
+      res.status(200).json({ message: "Data charged successfully" });
+    } else {
+      res.status(400).json({ message: CustomUtils.consts.UNAUTHORIZED });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @Get all users
 // @route GET /api/v1/users
 // @access Public
 exports.getAllUsers = async (req, res) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
+
+  const userIn = await req.userIn();
+  queryObj.user = userIn._id;
+  // const test = await req.viewUser();
+  // console.log(test);
   //
   // const userIn = await req.userIn();
   // console.log(userIn);
@@ -51,7 +85,17 @@ exports.getAllUsers = async (req, res) => {
 exports.getUserById = async (req, res) => {
   // get user by id
   try {
-    const user = await User.findById(req.params.id);
+
+    const userIn = await req.userIn();
+    const userSearch = await User.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const user = userSearch[0];
     if (!user)
       return res
         .status(404)
@@ -74,10 +118,10 @@ exports.createUser = async (req, res) => {
     const adminRole = await UserRole.find({ slug: bodyWR.role });
     // if (role.length) bodyWR.role = role[0]._id;
     switch (req.user.role.slug) {
-      case "admin":
+      case "super-administrateur":
         if (adminRole.length) bodyWR.role = adminRole[0]._id;
         break;
-      case "contributor":
+      case "admin":
         if (userRole.length) bodyWR.role = userRole[0]._id;
         break;
       case "user":
@@ -122,7 +166,17 @@ exports.createUser = async (req, res) => {
 // @access Public
 exports.updateUser = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
+
+    const userIn = await req.userIn();
+    const userSearch = await User.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const user = userSearch[0];
     if (!user) return res.status(404).json({ message: `User not found !` });
     // console.log(user._id != req.user._id, user._id + "", req.user._id + "");
     if (user._id + "" != req.user._id + "" && req.user.role.slug != "admin")
@@ -143,7 +197,17 @@ exports.updateUser = async (req, res) => {
 // @access Public
 exports.deleteUser = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
+
+    const userIn = await req.userIn();
+    const userSearch = await User.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const user = userSearch[0];
     if (!user)
       return res
         .status(404)

@@ -30,7 +30,7 @@ exports.getActivitySubCategoryById = async (req, res) => {
   try {
     // get activitySubCategory type by id
     const userIn = await req.userIn();
-    // get activity by id
+
     const activitySubCategorySearch = await ActivitySubCategory.find({
       _id: {
         $eq: req.params.id,
@@ -56,7 +56,7 @@ exports.getActivitySubCategoryById = async (req, res) => {
 exports.createActivitySubCategory = async (req, res) => {
   const CustomBody = { ...req.body };
   const slug = CustomUtils.slugify(CustomBody.name);
-  
+
   const userIn = await req.userIn();
   CustomBody.user = userIn._id;
   try {
@@ -74,6 +74,7 @@ exports.createActivitySubCategory = async (req, res) => {
 // @Access: Private
 exports.updateActivitySubCategory = async (req, res) => {
   try {
+    const userIn = await req.userIn();
     const activitySubCategorySearch = await ActivitySubCategory.find({
       _id: {
         $eq: req.params.id,
@@ -105,8 +106,9 @@ exports.updateActivitySubCategory = async (req, res) => {
 // @Delete activitySubCategory type by id
 // @Route: /api/v1/activitySubCategories/:id
 // @Access: Private
-exports.deleteActivitySubCategory = async (req, res, next) => {
+exports.deleteActivitySubCategory = async (req, res) => {
   try {
+    const userIn = await req.userIn();
     const activitySubCategorySearch = await ActivitySubCategory.find({
       _id: {
         $eq: req.params.id,

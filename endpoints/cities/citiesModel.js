@@ -2,6 +2,12 @@ const mongoose = require("mongoose");
 
 const citySchema = mongoose.Schema(
   {
+    user: {
+      type: String,
+      ref: "User",
+      default: "000000000000000000000000",
+      required: true,
+    },
     country: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Country",
@@ -29,6 +35,10 @@ citySchema.pre(/^find/, function (next) {
   this.populate({
     path: "country",
     select: "_id name flag slug",
+  });
+  this.populate({
+    path: "user",
+    select: "_id username firstname lastname role",
   });
   next();
 });

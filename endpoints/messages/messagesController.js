@@ -7,6 +7,8 @@ const CustomUtils = require("../../utils/index.js");
 exports.getAllMessages = async (req, res, next) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
+  const userIn = await req.userIn();
+  queryObj.user = userIn._id;
   try {
     const messages = await Message.find(queryObj)
       .limit(limit * 1)
@@ -27,7 +29,17 @@ exports.getAllMessages = async (req, res, next) => {
 exports.getMessageById = async (req, res) => {
   try {
     // get message by id
-    const message = await Message.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const messageSearch = await Message.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const message = messageSearch[0];
     if (!message)
       return res.status(404).json({
         message: CustomUtils.consts.NOT_FOUND,
@@ -43,6 +55,9 @@ exports.getMessageById = async (req, res) => {
 exports.createMessage = async (req, res) => {
   const CustomBody = { ...req.body };
   const slug = CustomUtils.slugify(CustomBody.name);
+
+  const userIn = await req.userIn();
+  CustomBody.user = userIn._id;
   try {
     CustomBody.slug = slug;
     // create new message
@@ -58,7 +73,17 @@ exports.createMessage = async (req, res) => {
 // @Access: Private
 exports.updateMessage = async (req, res) => {
   try {
-    const message = await Message.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const messageSearch = await Message.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const message = messageSearch[0];
     if (!message) {
       return res.status(404).json({ message: "message not found !" });
     }
@@ -77,7 +102,17 @@ exports.updateMessage = async (req, res) => {
 // @Access: Private
 exports.deleteMessage = async (req, res, next) => {
   try {
-    const message = await Message.findById(req.params.id);
+    const userIn = await req.userIn();
+
+    const messageSearch = await Message.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    const message = messageSearch[0];
     if (!message) return res.status(404).json({ message: `message not found !` });
     await Message.findByIdAndDelete(req.params.id);
     res.status(200).json({ message: "message deleted successfully !" });
