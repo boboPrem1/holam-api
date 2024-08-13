@@ -54,15 +54,13 @@ exports.sign = async (req, res, next) => {
     "phone.indicatif": { $eq: indicatif },
     "phone.number": { $eq: number },
   });
-  if (existingUser.length > 0 && existingUser[0].password) {
-    res
-      .status(200)
-      .json({
-        existing: true,
-        created: false,
-        otpSended: false,
-      });
-  } else if (existingUser.length > 0 && !existingUser[0].password) {
+  if (existingUser.length > 0 && existingUser[0].passwordIsSet) {
+    res.status(200).json({
+      existing: true,
+      created: false,
+      otpSended: false,
+    });
+  } else if (existingUser.length > 0 && !existingUser[0].passwordIsSet) {
     const user = existingUser[0];
     let randomNumber = CustomUtils.getRandomNbr();
     let existingOtp = await Otp.find({
@@ -85,9 +83,11 @@ exports.sign = async (req, res, next) => {
     });
 
     const params = {
-      Message: `Votre OTP est: ${otp.otp},
-      il est valide jusaqu'au ${CustomUtils.formatDateLong(otp.exp)},
-      gardez le secret. Avec HOLAM, des villes plus sûres.`,
+      Message: `Votre OTP est: ${
+        otp.otp
+      }.\nIl est valide jusaqu'au ${CustomUtils.formatDateLong(
+        otp.exp
+      )},gardez le secret./n Avec HOLAM, des villes plus sûres.`,
       PhoneNumber: indicatif + "" + number,
       MessageAttributes: {
         "AWS.SNS.SMS.SenderID": {
@@ -256,7 +256,11 @@ exports.setPassword = async (req, res, next) => {
   if (existingUser.length) {
     const user = existingUser[0];
     const hashedPassword = hashPassword(password);
-    await User.findByIdAndUpdate(user._id, { password }, { new: true });
+    await User.findByIdAndUpdate(
+      user._id,
+      { password, passwordIsSet: true },
+      { new: true }
+    );
   }
   // console.log(existingUser);
   return res.status(200).json({ success: true });

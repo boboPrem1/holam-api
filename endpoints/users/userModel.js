@@ -35,6 +35,10 @@ const userSchema = mongoose.Schema(
       type: String,
       select: false,
     },
+    passwordIsSet: {
+      type: Boolean,
+      default: false,
+    },
     confirmPassword: {
       type: String,
       validate: {
