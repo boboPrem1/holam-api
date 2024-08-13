@@ -54,8 +54,62 @@ exports.sign = async (req, res, next) => {
     "phone.indicatif": { $eq: indicatif },
     "phone.number": { $eq: number },
   });
-  if (existingUser.length > 0) {
-    res.status(200).json({ existing: true });
+  if (existingUser.length > 0 && existingUser[0].password) {
+    res
+      .status(200)
+      .json({
+        existing: true,
+        created: false,
+        otpSended: false,
+      });
+  } else if (existingUser.length > 0 && !existingUser[0].password) {
+    const user = existingUser[0];
+    let randomNumber = CustomUtils.getRandomNbr();
+    let existingOtp = await Otp.find({
+      otp: { $eq: randomNumber },
+    });
+    const beginningDate = new Date();
+    const endingDate = new Date(beginningDate);
+    endingDate.setDate(beginningDate.getDate() + 1);
+
+    while (existingOtp.length) {
+      randomNumber = CustomUtils.getRandomNbr();
+      existingOtp = await Otp.find({
+        otp: { $eq: randomNumber },
+      });
+    }
+    otp = await Otp.create({
+      user: user._id,
+      otp: randomNumber,
+      exp: endingDate,
+    });
+
+    const params = {
+      Message: `Votre OTP est: ${otp.otp},
+      il est valide jusaqu'au ${CustomUtils.formatDateLong(otp.exp)},
+      gardez le secret. Avec HOLAM, des villes plus sûres.`,
+      PhoneNumber: indicatif + "" + number,
+      MessageAttributes: {
+        "AWS.SNS.SMS.SenderID": {
+          DataType: "String",
+          StringValue: APP_NAME, // Remplacez par le nom de votre application
+        },
+      },
+    };
+
+    try {
+      const data = await snsClient.send(new PublishCommand(params));
+      // res.status(200).json({ message: "OTP sent successfully", data });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to send OTP", error });
+    }
+
+    // res.status(201).json(otp);
+    res.status(200).json({
+      existing: true,
+      created: false,
+      otpSended: true,
+    });
   } else {
     const role = await UserRole.find({
       slug: { $eq: "user" },
