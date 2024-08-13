@@ -7,8 +7,8 @@ const CustomUtils = require("../../utils/index.js");
 exports.getAllActivityCategories = async (req, res, next) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
-  const userIn = await req.userIn();
-  queryObj.user = userIn._id;
+  // const userIn = await req.userIn();
+  // queryObj.user = userIn._id;
   try {
     const activityCategories = await ActivityCategory.find(queryObj)
       .limit(limit * 1)
@@ -35,9 +35,6 @@ exports.getActivityCategoryById = async (req, res) => {
       _id: {
         $eq: req.params.id,
       },
-      user: {
-        $eq: userIn._id,
-      },
     });
     const activityCategory = activityCategorySearch[0];
     if (!activityCategory)
@@ -57,8 +54,8 @@ exports.createActivityCategory = async (req, res) => {
   const CustomBody = { ...req.body };
   const slug = CustomUtils.slugify(CustomBody.name);
 
-  const userIn = await req.userIn();
-  CustomBody.user = userIn._id;
+  // const userIn = await req.userIn();
+  // CustomBody.user = userIn._id;
   try {
     CustomBody.slug = slug;
     // create new activityCategory type
@@ -79,9 +76,6 @@ exports.updateActivityCategory = async (req, res) => {
     const activityCategorySearch = await ActivityCategory.find({
       _id: {
         $eq: req.params.id,
-      },
-      user: {
-        $eq: userIn._id,
       },
     });
     const activityCategory = activityCategorySearch[0];
@@ -113,14 +107,11 @@ exports.deleteActivityCategory = async (req, res, next) => {
       _id: {
         $eq: req.params.id,
       },
-      user: {
-        $eq: userIn._id,
-      },
     });
     const activityCategory = activityCategorySearch[0];
     if (!activityCategory)
       return res.status(404).json({ message: `activityCategory not found !` });
-    await ActivityCategory.findByIdAndDelete(req.params.id);
+    // await ActivityCategory.findByIdAndDelete(req.params.id);
     res
       .status(200)
       .json({ message: "activityCategory deleted successfully !" });

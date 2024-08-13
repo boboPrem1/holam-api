@@ -7,8 +7,8 @@ const CustomUtils = require("../../utils/index.js");
 exports.getAllActivitySubCategories = async (req, res, next) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
-  const userIn = await req.userIn();
-  queryObj.user = userIn._id;
+  // const userIn = await req.userIn();
+  // queryObj.user = userIn._id;
   try {
     const activitySubCategories = await ActivitySubCategory.find(queryObj)
       .limit(limit * 1)
@@ -34,9 +34,6 @@ exports.getActivitySubCategoryById = async (req, res) => {
     const activitySubCategorySearch = await ActivitySubCategory.find({
       _id: {
         $eq: req.params.id,
-      },
-      user: {
-        $eq: userIn._id,
       },
     });
     const activitySubCategory = activitySubCategorySearch[0];
@@ -79,9 +76,6 @@ exports.updateActivitySubCategory = async (req, res) => {
       _id: {
         $eq: req.params.id,
       },
-      user: {
-        $eq: userIn._id,
-      },
     });
     const activitySubCategory = activitySubCategorySearch[0];
     if (!activitySubCategory) {
@@ -122,7 +116,7 @@ exports.deleteActivitySubCategory = async (req, res) => {
       return res
         .status(404)
         .json({ message: `activitySubCategory not found !` });
-    await ActivitySubCategory.findByIdAndDelete(req.params.id);
+    // await ActivitySubCategory.findByIdAndDelete(req.params.id);
     res
       .status(200)
       .json({ message: "activitySubCategory deleted successfully !" });
