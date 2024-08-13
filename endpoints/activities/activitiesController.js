@@ -22,6 +22,7 @@ exports.getAllActivities = async (req, res, next) => {
     res.status(404).json({ message: error.message });
   }
 };
+//
 
 // @Get activity by id
 // @Route: /api/v1/activities/:id
