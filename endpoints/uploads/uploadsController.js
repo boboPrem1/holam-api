@@ -15,10 +15,14 @@ exports.uploadImage = async (req, res) => {
     // const s3Url = await uploadImageToS3(file);
     // console.log(file);
 
+    let location = file.location;
+
+    const locationSplited = location.split('https');
+
     const newFile = new File({
       user: user._id,
       name: file.originalname,
-      path: file.location,
+      path: file.location.replace(/https:/g, 'http:'),
       file: file,
     });
     await newFile.save();

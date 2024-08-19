@@ -423,7 +423,7 @@ exports.protect = async (req, res, next) => {
 
     // GRANT ACCESS TO PROTECTED ROUTE
     req.user = currentUser;
-    if (req.user.id) {
+    if (req.user) {
       req.userIn = async () => {
         const userIn = await User.findById(req.user.id);
         return userIn;
