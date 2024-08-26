@@ -13,6 +13,9 @@ const fileSchema = mongoose.Schema(
       required: true,
       unique: true,
     },
+    thumbnail: {
+      type: String,
+    },
     name: {
       type: String,
     },

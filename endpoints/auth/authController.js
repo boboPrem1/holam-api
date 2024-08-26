@@ -35,10 +35,16 @@ async function hashPassword(password) {
 }
 
 function signToken(user) {
-  return jwt.sign({ data: user._id }, process.env.JWT_SECRET, {
-    algorithm: "HS256",
-    expiresIn: "7d",
-  });
+  const secretKey = process.env.JWT_SECRET;
+  const payload = {
+    data: user._id,
+  };
+  const options = {
+    expiresIn: "7d", // Le token expirera dans une heure
+    audience: "holam.com", // L'audience du token
+    issuer: "holam", // L'émetteur du token
+  };
+  return jwt.sign(payload, secretKey, options);
 }
 
 function isObjectNotEmpty(obj) {
@@ -301,6 +307,39 @@ exports.signinWithTel = async (req, res, next) => {
   }
 };
 
+exports.signinWithEmail = async (req, res, next) => {
+  try {
+    let token = "";
+    // Test if email and password exist
+    const { email, password } = req.body;
+    if (!email || !password)
+      return res.status(400).json({ message: CustomUtils.consts.MISSING_DATA });
+
+    // Test if user exists && password is correct
+    const user = await User.findOne({
+      "email": { $eq: email },
+    }).select("+password");
+    // console.log(user);
+
+    if (!user || !(await user.comparePassword(password))) {
+      return res
+        .status(401)
+        .json({ message: "Identifiant ou mot de passe incorrect !" });
+    } else {
+      // If everything ok, send token to client
+      // req.user = user;
+      // console.log(req.user);
+      token = signToken(user);
+    }
+
+    // console.log(req.user);
+
+    res.status(200).json({ status: "success", token });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 exports.signinWithTelOtp = async (req, res, next) => {
   try {
     let token = "";
@@ -386,7 +425,10 @@ exports.protect = async (req, res, next) => {
     switch (way) {
       case "jwt":
         // 2) Verification token
-        decoded = jwt.verify(token, process.env.JWT_SECRET);
+        decoded = jwt.verify(token, process.env.JWT_SECRET, {
+          audience: "holam.com", // L'audience du token
+          issuer: "holam", // L'émetteur du token
+        });
         // 3) Check if user still exists
         currentUser = await User.findById(decoded.data);
         break;
