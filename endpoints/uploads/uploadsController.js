@@ -43,6 +43,7 @@ const generateThumbnail = (file) => {
   });
 };
 
+
 exports.upload = async (req, res) => {
   try {
     const user = await req.userIn();
