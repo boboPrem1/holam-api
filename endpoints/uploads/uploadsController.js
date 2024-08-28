@@ -14,6 +14,8 @@ const ffmpeg = require("fluent-ffmpeg");
 ffmpeg.setFfmpegPath(ffmpegPath);
 ffmpeg.setFfprobePath(ffprobePath);
 
+const cdn_url = process.env.CDN_URL;
+
 const generateThumbnail = (file) => {
   return new Promise((resolve, reject) => {
     const outputPath = path.join(
@@ -50,7 +52,10 @@ exports.upload = async (req, res) => {
     const newFile = new File({
       user: user._id,
       name: file.originalname,
-      path: file.location.replace(/https:/g, "http:"),
+      path: file.location.replace(
+        /http:\/\/cap.first.s3.af-south-1.amazonaws.com\//g,
+        cdn_url
+      ),
       file: file,
     });
     await newFile.save();
@@ -93,7 +98,9 @@ exports.uploadVideo = async (req, res) => {
       const newFile = new File({
         user: user._id,
         name: file.originalname,
-        path: file.location.replace(/https:/g, "http:"),
+      path: file.location.replace(
+        /http:\/\/cap.first.s3.af-south-1.amazonaws.com\//g,
+        cdn_url),
         thumbnail: thumbnailPath, // URL du thumbnail
       });
 
