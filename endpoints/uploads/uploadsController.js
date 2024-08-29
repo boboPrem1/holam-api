@@ -54,7 +54,7 @@ exports.upload = async (req, res) => {
       user: user._id,
       name: file.originalname,
       path: file.location.replace(
-        /http:\/\/cap.first.s3.af-south-1.amazonaws.com\//g,
+        /https:\/\/cap.first.s3.af-south-1.amazonaws.com\//g,
         cdn_url
       ),
       file: file,
@@ -100,7 +100,7 @@ exports.uploadVideo = async (req, res) => {
         user: user._id,
         name: file.originalname,
       path: file.location.replace(
-        /http:\/\/cap.first.s3.af-south-1.amazonaws.com\//g,
+        /https:\/\/cap.first.s3.af-south-1.amazonaws.com\//g,
         cdn_url),
         thumbnail: thumbnailPath, // URL du thumbnail
       });
