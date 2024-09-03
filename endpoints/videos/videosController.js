@@ -1,5 +1,6 @@
 const Video = require("./videosModel.js");
 const CustomUtils = require("../../utils/index.js");
+const File = require("../files/filesModel.js")
 
 // @Get all video
 // @Route: /api/v1/videos
@@ -60,8 +61,17 @@ exports.createVideo = async (req, res) => {
   CustomBody.user = userIn._id;
   try {
     CustomBody.slug = slug;
-    // create new video     
+
+    if (CustomBody.video) {
+      const video = await File.findById(CustomBody.video);
+      if (video) {
+        CustomBody.video = video.id;
+      }
+    }
+    // console.log(CustomBody);
+    // create new video
     const video = await Video.create(CustomBody);
+    // console.log
     res.status(201).json(video);
   } catch (error) {
     res.status(400).json({ message: error.message });

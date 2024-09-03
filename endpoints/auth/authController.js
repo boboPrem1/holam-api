@@ -41,8 +41,6 @@ function signToken(user) {
   };
   const options = {
     expiresIn: "7d", // Le token expirera dans une heure
-    audience: "holam.com", // L'audience du token
-    issuer: "holam", // L'émetteur du token
   };
   return jwt.sign(payload, secretKey, options);
 }
@@ -317,7 +315,7 @@ exports.signinWithEmail = async (req, res, next) => {
 
     // Test if user exists && password is correct
     const user = await User.findOne({
-      "email": { $eq: email },
+      email: { $eq: email },
     }).select("+password");
     // console.log(user);
 
@@ -392,14 +390,15 @@ exports.protect = async (req, res, next) => {
   try {
     // 1) Getting token and check if it's there
     let token;
-    let way;
+    let way = "jwt";
+    // console.log(req.headers.authorization);
     if (
       req.headers.authorization &&
       req.headers.authorization.startsWith("Bearer")
     ) {
       token = req.headers.authorization.split(" ")[1];
       way = "jwt";
-      // console.log("token found", token);
+      // console.log("jwt");
     }
     if (
       req.headers.authorization &&
@@ -409,7 +408,6 @@ exports.protect = async (req, res, next) => {
       way = "api_key";
     }
 
-    // console.log("token found", token);
 
     if (!token) {
       return res.status(401).json({
@@ -425,11 +423,11 @@ exports.protect = async (req, res, next) => {
     switch (way) {
       case "jwt":
         // 2) Verification token
-        decoded = jwt.verify(token, process.env.JWT_SECRET, {
-          audience: "holam.com", // L'audience du token
-          issuer: "holam", // L'émetteur du token
-        });
+
+        const secretKey = process.env.JWT_SECRET;
+        decoded = jwt.verify(token, secretKey);
         // 3) Check if user still exists
+        // console.log(decoded, secretKey);
         currentUser = await User.findById(decoded.data);
         break;
       case "api_key":

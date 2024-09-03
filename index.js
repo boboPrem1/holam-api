@@ -39,6 +39,7 @@ const chatsRoutes = require("./endpoints/chats/chatsRoutes.js");
 const messagesRoutes = require("./endpoints/messages/messagesRoutes.js");
 const notificationsRoutes = require("./endpoints/notifications/notificationsRoutes.js");
 const videosRoutes = require("./endpoints/videos/videosRoutes.js");
+const forYouRoutes = require("./endpoints/videos/forYouRoutes.js");
 const coursesRoutes = require("./endpoints/courses/coursesRoutes.js");
 const paymentMeansRoutes = require("./endpoints/paymentMeans/paymentMeansRoutes.js");
 const transactionsRoutes = require("./endpoints/transactions/transactionsRoutes.js");
@@ -84,6 +85,7 @@ app.use(express.static("public"));
 //protections
 app.use(API_URL_BASE, authRoutes);
 
+app.use(API_URL_BASE + "for_you", forYouRoutes);
 app.use(protect);
 app.use(view_user);
 app.use(API_URL_BASE + "users", userRoutes);

@@ -71,7 +71,7 @@ exports.uploadVideo = async (req, res) => {
   try {
     const user = await req.userIn();
     const file = req.file;
-    console.log(file);
+    // console.log(file);
     // Générer le thumbnail
     const thumbnailPath = await generateThumbnail(file);
 
@@ -105,7 +105,7 @@ exports.uploadVideo = async (req, res) => {
         thumbnail: thumbnailPath, // URL du thumbnail
       });
 
-    //   await newFile.save();
+      await newFile.save();
 
       res.status(200).json({ message: "File uploaded successfully", newFile });
     // });

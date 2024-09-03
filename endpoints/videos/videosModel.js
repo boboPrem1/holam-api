@@ -12,7 +12,6 @@ const videoSchema = mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "File",
       default: "000000000000000000000000",
-      required: true,
     },
     user: {
       type: mongoose.Schema.Types.ObjectId,
