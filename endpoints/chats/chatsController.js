@@ -8,7 +8,12 @@ exports.getAllChats = async (req, res, next) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
   const userIn = await req.userIn();
-  queryObj.user = userIn._id;
+  if (
+    !userIn.role.slug === "super-administrateur" ||
+    !userIn.role.slug === "admin"
+  ) {
+    queryObj.user = userIn._id;
+  }
   try {
     const chats = await Chat.find(queryObj)
       .limit(limit * 1)
@@ -31,7 +36,7 @@ exports.getChatById = async (req, res) => {
     // get chat by id
     const userIn = await req.userIn();
     // get chat by id
-    const chatSearch = await Chat.find({
+    let chatSearch = await Chat.find({
       _id: {
         $eq: req.params.id,
       },
@@ -39,6 +44,16 @@ exports.getChatById = async (req, res) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      chatSearch = await Chat.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const chat = chatSearch[0];
     if (!chat)
       return res.status(404).json({
@@ -74,7 +89,7 @@ exports.updateChat = async (req, res) => {
   try {
     const userIn = await req.userIn();
 
-    const chatSearch = await Chat.find({
+    let chatSearch = await Chat.find({
       _id: {
         $eq: req.params.id,
       },
@@ -82,6 +97,16 @@ exports.updateChat = async (req, res) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      chatSearch = await Chat.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const chat = chatSearch[0];
     if (!chat) {
       return res.status(404).json({ message: "chat not found !" });
@@ -103,7 +128,7 @@ exports.deleteChat = async (req, res, next) => {
   try {
     const userIn = await req.userIn();
 
-    const chatSearch = await Chat.find({
+    let chatSearch = await Chat.find({
       _id: {
         $eq: req.params.id,
       },
@@ -111,6 +136,16 @@ exports.deleteChat = async (req, res, next) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      chatSearch = await Chat.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const chat = chatSearch[0];
     if (!chat) return res.status(404).json({ message: `chat not found !` });
     await Chat.findByIdAndDelete(req.params.id);

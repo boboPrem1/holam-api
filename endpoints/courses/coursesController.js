@@ -8,7 +8,12 @@ exports.getAllCourses = async (req, res, next) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
   const userIn = await req.userIn();
-  queryObj.user = userIn._id;
+  if (
+    !userIn.role.slug === "super-administrateur" ||
+    !userIn.role.slug === "admin"
+  ) {
+    queryObj.user = userIn._id;
+  }
   try {
     const courses = await Course.find(queryObj)
       .limit(limit * 1)
@@ -31,7 +36,7 @@ exports.getCourseById = async (req, res) => {
     // get course by id
     const userIn = await req.userIn();
 
-    const courseSearch = await Course.find({
+    let courseSearch = await Course.find({
       _id: {
         $eq: req.params.id,
       },
@@ -39,6 +44,16 @@ exports.getCourseById = async (req, res) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      courseSearch = await Course.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const course = courseSearch[0];
     if (!course)
       return res.status(404).json({
@@ -75,7 +90,7 @@ exports.updateCourse = async (req, res) => {
   try {
     const userIn = await req.userIn();
 
-    const courseSearch = await Course.find({
+    let courseSearch = await Course.find({
       _id: {
         $eq: req.params.id,
       },
@@ -83,6 +98,16 @@ exports.updateCourse = async (req, res) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      courseSearch = await Course.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const course = courseSearch[0];
     if (!course) {
       return res.status(404).json({ message: "course not found !" });
@@ -104,7 +129,7 @@ exports.deleteCourse = async (req, res, next) => {
   try {
     const userIn = await req.userIn();
 
-    const courseSearch = await Course.find({
+    let courseSearch = await Course.find({
       _id: {
         $eq: req.params.id,
       },
@@ -112,6 +137,16 @@ exports.deleteCourse = async (req, res, next) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      courseSearch = await Course.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const course = courseSearch[0];
     if (!course) return res.status(404).json({ message: `course not found !` });
     await Course.findByIdAndDelete(req.params.id);

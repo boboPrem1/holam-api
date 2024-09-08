@@ -8,7 +8,12 @@ exports.getAllNotifications = async (req, res, next) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
   const userIn = await req.userIn();
-  queryObj.user = userIn._id;
+  if (
+    !userIn.role.slug === "super-administrateur" ||
+    !userIn.role.slug === "admin"
+  ) {
+    queryObj.user = userIn._id;
+  }
   try {
     const notifications = await Notification.find(queryObj)
       .limit(limit * 1)
@@ -31,7 +36,7 @@ exports.getNotificationById = async (req, res) => {
     // get notification by id
     const userIn = await req.userIn();
 
-    const notificationSearch = await Notification.find({
+    let notificationSearch = await Notification.find({
       _id: {
         $eq: req.params.id,
       },
@@ -39,6 +44,16 @@ exports.getNotificationById = async (req, res) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      notificationSearch = await Notification.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const notification = notificationSearch[0];
     if (!notification)
       return res.status(404).json({
@@ -60,7 +75,7 @@ exports.createNotification = async (req, res) => {
   CustomBody.user = userIn._id;
   try {
     CustomBody.slug = slug;
-    // create new notification     
+    // create new notification
     const notification = await Notification.create(CustomBody);
     res.status(201).json(notification);
   } catch (error) {
@@ -75,7 +90,7 @@ exports.updateNotification = async (req, res) => {
   try {
     const userIn = await req.userIn();
 
-    const notificationSearch = await Notification.find({
+    let notificationSearch = await Notification.find({
       _id: {
         $eq: req.params.id,
       },
@@ -83,14 +98,28 @@ exports.updateNotification = async (req, res) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      notificationSearch = await Notification.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const notification = notificationSearch[0];
     if (!notification) {
       return res.status(404).json({ message: "notification not found !" });
     }
 
-    const updated = await Notification.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
+    const updated = await Notification.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      {
+        new: true,
+      }
+    );
     return res.status(200).json(updated);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -104,7 +133,7 @@ exports.deleteNotification = async (req, res, next) => {
   try {
     const userIn = await req.userIn();
 
-    const notificationSearch = await Notification.find({
+    let notificationSearch = await Notification.find({
       _id: {
         $eq: req.params.id,
       },
@@ -112,8 +141,19 @@ exports.deleteNotification = async (req, res, next) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      notificationSearch = await Notification.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const notification = notificationSearch[0];
-    if (!notification) return res.status(404).json({ message: `notification not found !` });
+    if (!notification)
+      return res.status(404).json({ message: `notification not found !` });
     await Notification.findByIdAndDelete(req.params.id);
     res.status(200).json({ message: "notification deleted successfully !" });
   } catch (error) {

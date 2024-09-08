@@ -1,6 +1,6 @@
 const Video = require("./videosModel.js");
 const CustomUtils = require("../../utils/index.js");
-const File = require("../files/filesModel.js")
+const File = require("../files/filesModel.js");
 
 // @Get all video
 // @Route: /api/v1/videos
@@ -9,7 +9,12 @@ exports.getAllVideos = async (req, res, next) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
   const userIn = await req.userIn();
-  queryObj.user = userIn._id;
+  if (
+    !userIn.role.slug === "super-administrateur" ||
+    !userIn.role.slug === "admin"
+  ) {
+    queryObj.user = userIn._id;
+  }
   try {
     const videos = await Video.find(queryObj)
       .limit(limit * 1)
@@ -32,14 +37,24 @@ exports.getVideoById = async (req, res) => {
     // get video by id
     const userIn = await req.userIn();
 
-    const videoSearch = await Video.find({
+    let videoSearch = await Video.find({
       _id: {
         $eq: req.params.id,
       },
-      user: {
+      Video: {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      videoSearch = await User.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const video = videoSearch[0];
     if (!video)
       return res.status(404).json({
@@ -85,14 +100,24 @@ exports.updateVideo = async (req, res) => {
   try {
     const userIn = await req.userIn();
 
-    const videoSearch = await Video.find({
+    let videoSearch = await Video.find({
       _id: {
         $eq: req.params.id,
       },
-      user: {
+      Video: {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      videoSearch = await User.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const video = videoSearch[0];
     if (!video) {
       return res.status(404).json({ message: "video not found !" });
@@ -114,14 +139,24 @@ exports.deleteVideo = async (req, res, next) => {
   try {
     const userIn = await req.userIn();
 
-    const videoSearch = await Video.find({
+    let videoSearch = await Video.find({
       _id: {
         $eq: req.params.id,
       },
-      user: {
+      Video: {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      videoSearch = await User.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const video = videoSearch[0];
     if (!video) return res.status(404).json({ message: `video not found !` });
     await Video.findByIdAndDelete(req.params.id);

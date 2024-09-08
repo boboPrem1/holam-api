@@ -8,7 +8,12 @@ exports.getAllGeolocationServiceTransactions = async (req, res, next) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
   const userIn = await req.userIn();
-  queryObj.user = userIn._id;
+  if (
+    !userIn.role.slug === "super-administrateur" ||
+    !userIn.role.slug === "admin"
+  ) {
+    queryObj.user = userIn._id;
+  }
   try {
     const geolocationServiceTransactions =
       await GeolocationServiceTransaction.find(queryObj)
@@ -32,15 +37,28 @@ exports.getGeolocationServiceTransactionById = async (req, res) => {
     // get geolocationServiceTransaction by id
     const userIn = await req.userIn();
 
-    const geolocationServiceTransactionSearch = await GeolocationServiceTransaction.find({
-      _id: {
-        $eq: req.params.id,
-      },
-      user: {
-        $eq: userIn._id,
-      },
-    });
-    const geolocationServiceTransaction = geolocationServiceTransactionSearch[0];
+    let geolocationServiceTransactionSearch =
+      await GeolocationServiceTransaction.find({
+        _id: {
+          $eq: req.params.id,
+        },
+        user: {
+          $eq: userIn._id,
+        },
+      });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      geolocationServiceTransactionSearch =
+        await GeolocationServiceTransaction.find({
+          _id: {
+            $eq: req.params.id,
+          },
+        });
+    }
+    const geolocationServiceTransaction =
+      geolocationServiceTransactionSearch[0];
     if (!geolocationServiceTransaction)
       return res.status(404).json({
         message: CustomUtils.consts.NOT_FOUND,
@@ -78,15 +96,28 @@ exports.updateGeolocationServiceTransaction = async (req, res) => {
   try {
     const userIn = await req.userIn();
 
-    const geolocationServiceTransactionSearch = await GeolocationServiceTransaction.find({
-      _id: {
-        $eq: req.params.id,
-      },
-      user: {
-        $eq: userIn._id,
-      },
-    });
-    const geolocationServiceTransaction = geolocationServiceTransactionSearch[0];
+    let geolocationServiceTransactionSearch =
+      await GeolocationServiceTransaction.find({
+        _id: {
+          $eq: req.params.id,
+        },
+        user: {
+          $eq: userIn._id,
+        },
+      });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      geolocationServiceTransactionSearch =
+        await GeolocationServiceTransaction.find({
+          _id: {
+            $eq: req.params.id,
+          },
+        });
+    }
+    const geolocationServiceTransaction =
+      geolocationServiceTransactionSearch[0];
     if (!geolocationServiceTransaction) {
       return res
         .status(404)
@@ -113,15 +144,28 @@ exports.deleteGeolocationServiceTransaction = async (req, res, next) => {
   try {
     const userIn = await req.userIn();
 
-    const geolocationServiceTransactionSearch = await GeolocationServiceTransaction.find({
-      _id: {
-        $eq: req.params.id,
-      },
-      user: {
-        $eq: userIn._id,
-      },
-    });
-    const geolocationServiceTransaction = geolocationServiceTransactionSearch[0];
+    let geolocationServiceTransactionSearch =
+      await GeolocationServiceTransaction.find({
+        _id: {
+          $eq: req.params.id,
+        },
+        user: {
+          $eq: userIn._id,
+        },
+      });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      geolocationServiceTransactionSearch =
+        await GeolocationServiceTransaction.find({
+          _id: {
+            $eq: req.params.id,
+          },
+        });
+    }
+    const geolocationServiceTransaction =
+      geolocationServiceTransactionSearch[0];
     if (!geolocationServiceTransaction)
       return res
         .status(404)

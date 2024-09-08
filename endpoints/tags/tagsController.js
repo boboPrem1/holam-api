@@ -8,7 +8,12 @@ exports.getAllTags = async (req, res, next) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
   const userIn = await req.userIn();
-  queryObj.user = userIn._id;
+  if (
+    !userIn.role.slug === "super-administrateur" ||
+    !userIn.role.slug === "admin"
+  ) {
+    queryObj.user = userIn._id;
+  }
   try {
     const tags = await Tag.find(queryObj)
       .limit(limit * 1)
@@ -31,7 +36,7 @@ exports.getTagById = async (req, res) => {
     // get tag type by id
     const userIn = await req.userIn();
 
-    const tagSearch = await Tag.find({
+    let tagSearch = await Tag.find({
       _id: {
         $eq: req.params.id,
       },
@@ -39,6 +44,16 @@ exports.getTagById = async (req, res) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      tagSearch = await Tag.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const tag = tagSearch[0];
     if (!tag)
       return res.status(404).json({
@@ -76,7 +91,7 @@ exports.updateTag = async (req, res) => {
   try {
     const userIn = await req.userIn();
 
-    const tagSearch = await Tag.find({
+    let tagSearch = await Tag.find({
       _id: {
         $eq: req.params.id,
       },
@@ -84,6 +99,16 @@ exports.updateTag = async (req, res) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      tagSearch = await Tag.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const tag = tagSearch[0];
     if (!tag) {
       return res.status(404).json({ message: "tag not found !" });
@@ -105,7 +130,7 @@ exports.deleteTag = async (req, res, next) => {
   try {
     const userIn = await req.userIn();
 
-    const tagSearch = await Tag.find({
+    let tagSearch = await Tag.find({
       _id: {
         $eq: req.params.id,
       },
@@ -113,6 +138,16 @@ exports.deleteTag = async (req, res, next) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      tagSearch = await Tag.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const tag = tagSearch[0];
     if (!tag) return res.status(404).json({ message: `tag not found !` });
     await Tag.findByIdAndDelete(req.params.id);

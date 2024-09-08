@@ -8,7 +8,12 @@ exports.getAllOtps = async (req, res, next) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
   const userIn = await req.userIn();
-  queryObj.user = userIn._id;
+  if (
+    !userIn.role.slug === "super-administrateur" ||
+    !userIn.role.slug === "admin"
+  ) {
+    queryObj.user = userIn._id;
+  }
   try {
     const Otps = await Otp.find(queryObj)
       .limit(limit * 1)
@@ -31,7 +36,7 @@ exports.getOtpById = async (req, res) => {
     // get otp type by id
     const userIn = await req.userIn();
 
-    const otpSearch = await Otp.find({
+    let otpSearch = await Otp.find({
       _id: {
         $eq: req.params.id,
       },
@@ -39,6 +44,16 @@ exports.getOtpById = async (req, res) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      otpSearch = await Otp.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const otp = otpSearch[0];
     if (!otp)
       return res.status(404).json({
@@ -95,7 +110,7 @@ exports.updateOtp = async (req, res) => {
   try {
     const userIn = await req.userIn();
 
-    const otpSearch = await Otp.find({
+    let otpSearch = await Otp.find({
       _id: {
         $eq: req.params.id,
       },
@@ -103,6 +118,16 @@ exports.updateOtp = async (req, res) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      otpSearch = await Otp.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const otp = otpSearch[0];
     if (!otp) {
       return res.status(404).json({ message: "otp not found !" });
@@ -124,7 +149,7 @@ exports.deleteOtp = async (req, res, next) => {
   try {
     const userIn = await req.userIn();
 
-    const otpSearch = await Otp.find({
+    let otpSearch = await Otp.find({
       _id: {
         $eq: req.params.id,
       },
@@ -132,6 +157,16 @@ exports.deleteOtp = async (req, res, next) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      otpSearch = await Otp.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const otp = otpSearch[0];
     if (!otp) return res.status(404).json({ message: `otp not found !` });
     await Otp.findByIdAndDelete(req.params.id);

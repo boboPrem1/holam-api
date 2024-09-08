@@ -8,7 +8,12 @@ exports.getAllGeolocationServiceMasters = async (req, res) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
   const userIn = await req.userIn();
-  queryObj.user = userIn._id;
+  if (
+    !userIn.role.slug === "super-administrateur" ||
+    !userIn.role.slug === "admin"
+  ) {
+    queryObj.user = userIn._id;
+  }
   try {
     const geolocationServiceMasters = await GeolocationServiceMaster.find(
       queryObj
@@ -32,7 +37,7 @@ exports.getGeolocationServiceMasterById = async (req, res) => {
   try {
     const userIn = await req.userIn();
 
-    const geolocationServiceMasterSearch = await GeolocationServiceMaster.find({
+    let geolocationServiceMasterSearch = await GeolocationServiceMaster.find({
       _id: {
         $eq: req.params.id,
       },
@@ -40,6 +45,16 @@ exports.getGeolocationServiceMasterById = async (req, res) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      geolocationServiceMasterSearch = await GeolocationServiceMaster.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const geolocationServiceMaster = geolocationServiceMasterSearch[0];
     if (!geolocationServiceMaster)
       return res.status(404).json({ message: CustomUtils.consts.NOT_EXIST });
@@ -76,7 +91,7 @@ exports.updateGeolocationServiceMasterById = async (req, res) => {
   try {
     const userIn = await req.userIn();
 
-    const geolocationServiceMasterSearch = await GeolocationServiceMaster.find({
+    let geolocationServiceMasterSearch = await GeolocationServiceMaster.find({
       _id: {
         $eq: req.params.id,
       },
@@ -84,6 +99,16 @@ exports.updateGeolocationServiceMasterById = async (req, res) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      geolocationServiceMasterSearch = await GeolocationServiceMaster.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const geolocationServiceMaster = geolocationServiceMasterSearch[0];
     if (!geolocationServiceMaster)
       return res.status(404).json({ message: CustomUtils.consts.NOT_EXIST });
@@ -108,7 +133,7 @@ exports.deleteGeolocationServiceMasterById = async (req, res) => {
   try {
     const userIn = await req.userIn();
 
-    const geolocationServiceMasterSearch = await GeolocationServiceMaster.find({
+    let geolocationServiceMasterSearch = await GeolocationServiceMaster.find({
       _id: {
         $eq: req.params.id,
       },
@@ -116,6 +141,16 @@ exports.deleteGeolocationServiceMasterById = async (req, res) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      geolocationServiceMasterSearch = await GeolocationServiceMaster.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const geolocationServiceMaster = geolocationServiceMasterSearch[0];
     if (!geolocationServiceMaster)
       return res.status(404).json({ message: CustomUtils.consts.NOT_EXIST });

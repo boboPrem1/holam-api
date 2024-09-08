@@ -8,7 +8,12 @@ exports.getAllComments = async (req, res, next) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
   const userIn = await req.userIn();
-  queryObj.user = userIn._id;
+  if (
+    !userIn.role.slug === "super-administrateur" ||
+    !userIn.role.slug === "admin"
+  ) {
+    queryObj.user = userIn._id;
+  }
   try {
     const comments = await Comment.find(queryObj)
       .limit(limit * 1)
@@ -31,7 +36,7 @@ exports.getCommentById = async (req, res) => {
     // get comment by id
     const userIn = await req.userIn();
 
-    const commentSearch = await Comment.find({
+    let commentSearch = await Comment.find({
       _id: {
         $eq: req.params.id,
       },
@@ -39,6 +44,16 @@ exports.getCommentById = async (req, res) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      commentSearch = await Comment.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const comment = commentSearch[0];
     if (!comment)
       return res.status(404).json({
@@ -74,7 +89,7 @@ exports.updateComment = async (req, res) => {
   try {
     const userIn = await req.userIn();
 
-    const commentSearch = await Comment.find({
+    let commentSearch = await Comment.find({
       _id: {
         $eq: req.params.id,
       },
@@ -82,6 +97,16 @@ exports.updateComment = async (req, res) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      commentSearch = await Comment.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const comment = commentSearch[0];
     if (!comment) {
       return res.status(404).json({ message: "comment not found !" });
@@ -103,7 +128,7 @@ exports.deleteComment = async (req, res, next) => {
   try {
     const userIn = await req.userIn();
 
-    const commentSearch = await Comment.find({
+    let commentSearch = await Comment.find({
       _id: {
         $eq: req.params.id,
       },
@@ -111,6 +136,16 @@ exports.deleteComment = async (req, res, next) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      commentSearch = await Comment.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const comment = commentSearch[0];
     if (!comment)
       return res.status(404).json({ message: `comment not found !` });

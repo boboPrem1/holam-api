@@ -102,10 +102,12 @@ exports.updateActivityCategory = async (req, res) => {
 exports.deleteActivityCategory = async (req, res, next) => {
   try {
     const userIn = await req.userIn();
-
     const activityCategorySearch = await ActivityCategory.find({
       _id: {
         $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
       },
     });
     const activityCategory = activityCategorySearch[0];

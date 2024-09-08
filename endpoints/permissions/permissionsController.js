@@ -8,7 +8,12 @@ exports.getAllPermissions = async (req, res, next) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
   const userIn = await req.userIn();
-  queryObj.user = userIn._id;
+  if (
+    !userIn.role.slug === "super-administrateur" ||
+    !userIn.role.slug === "admin"
+  ) {
+    queryObj.user = userIn._id;
+  }
   try {
     const Permissions = await Permission.find(queryObj)
       .limit(limit * 1)
@@ -30,7 +35,8 @@ exports.getPermissionById = async (req, res) => {
   try {
     // get opportunity type by id
     const userIn = await req.userIn();
-    const permissionSearch = await Permission.find({
+
+    let permissionSearch = await Permission.find({
       _id: {
         $eq: req.params.id,
       },
@@ -38,6 +44,16 @@ exports.getPermissionById = async (req, res) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      permissionSearch = await Permission.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const permission = permissionSearch[0];
     if (!permission)
       return res.status(404).json({
@@ -74,7 +90,8 @@ exports.createPermission = async (req, res) => {
 exports.updatePermission = async (req, res) => {
   try {
     const userIn = await req.userIn();
-    const permissionSearch = await Permission.find({
+
+    let permissionSearch = await Permission.find({
       _id: {
         $eq: req.params.id,
       },
@@ -82,6 +99,16 @@ exports.updatePermission = async (req, res) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      permissionSearch = await Permission.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const permission = permissionSearch[0];
     if (!permission) {
       return res.status(404).json({ message: "permission not found !" });
@@ -104,7 +131,8 @@ exports.updatePermission = async (req, res) => {
 exports.deletePermission = async (req, res, next) => {
   try {
     const userIn = await req.userIn();
-    const permissionSearch = await Permission.find({
+
+    let permissionSearch = await Permission.find({
       _id: {
         $eq: req.params.id,
       },
@@ -112,13 +140,21 @@ exports.deletePermission = async (req, res, next) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      permissionSearch = await Permission.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const permission = permissionSearch[0];
     if (!permission)
       return res.status(404).json({ message: `permission not found !` });
     await Permission.findByIdAndDelete(req.params.id);
-    res
-      .status(200)
-      .json({ message: "permission deleted successfully !" });
+    res.status(200).json({ message: "permission deleted successfully !" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

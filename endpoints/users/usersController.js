@@ -54,7 +54,12 @@ exports.getAllUsers = async (req, res) => {
   const queryObj = CustomUtils.advancedQuery(req.query);
 
   const userIn = await req.userIn();
-  queryObj.user = userIn._id;
+  if (
+    !userIn.role.slug === "super-administrateur" ||
+    !userIn.role.slug === "admin"
+  ) {
+    queryObj.user = userIn._id;
+  }
   // const test = await req.viewUser();
   // console.log(test);
   //
@@ -85,9 +90,8 @@ exports.getAllUsers = async (req, res) => {
 exports.getUserById = async (req, res) => {
   // get user by id
   try {
-
     const userIn = await req.userIn();
-    const userSearch = await User.find({
+    let userSearch = await User.find({
       _id: {
         $eq: req.params.id,
       },
@@ -95,6 +99,16 @@ exports.getUserById = async (req, res) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      userSearch = await User.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const user = userSearch[0];
     if (!user)
       return res
@@ -112,6 +126,9 @@ exports.getUserById = async (req, res) => {
 exports.createUser = async (req, res) => {
   try {
     const bodyWR = { ...req.body };
+
+    const userIn = await req.userIn();
+    bodyWR.user = userIn._id;
     bodyWR.username = CustomUtils.generateUsername();
     // console.log(bodyWR);
     const userRole = await UserRole.find({ slug: "user" });
@@ -166,9 +183,8 @@ exports.createUser = async (req, res) => {
 // @access Public
 exports.updateUser = async (req, res) => {
   try {
-
     const userIn = await req.userIn();
-    const userSearch = await User.find({
+    let userSearch = await User.find({
       _id: {
         $eq: req.params.id,
       },
@@ -176,6 +192,16 @@ exports.updateUser = async (req, res) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      userSearch = await User.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const user = userSearch[0];
     if (!user) return res.status(404).json({ message: `User not found !` });
     // console.log(user._id != req.user._id, user._id + "", req.user._id + "");
@@ -197,9 +223,8 @@ exports.updateUser = async (req, res) => {
 // @access Public
 exports.deleteUser = async (req, res) => {
   try {
-
     const userIn = await req.userIn();
-    const userSearch = await User.find({
+    let userSearch = await User.find({
       _id: {
         $eq: req.params.id,
       },
@@ -207,6 +232,16 @@ exports.deleteUser = async (req, res) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      userSearch = await User.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const user = userSearch[0];
     if (!user)
       return res

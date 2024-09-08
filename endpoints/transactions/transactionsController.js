@@ -21,7 +21,12 @@ exports.getAllTransactions = async (req, res, next) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
   const userIn = await req.userIn();
-  queryObj.user = userIn._id;
+  if (
+    !userIn.role.slug === "super-administrateur" ||
+    !userIn.role.slug === "admin"
+  ) {
+    queryObj.user = userIn._id;
+  }
   try {
     const transactions = await Transaction.find(queryObj)
       .limit(limit * 1)
@@ -45,7 +50,7 @@ exports.getTransactionById = async (req, res) => {
     // get transaction by id
     const userIn = await req.userIn();
 
-    const transactionSearch = await Transaction.find({
+    let transactionSearch = await Transaction.find({
       _id: {
         $eq: req.params.id,
       },
@@ -53,6 +58,16 @@ exports.getTransactionById = async (req, res) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      transactionSearch = await Transaction.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const transaction = transactionSearch[0];
     if (!transaction)
       return res.status(404).json({
@@ -204,7 +219,7 @@ exports.updateTransaction = async (req, res) => {
   try {
     const userIn = await req.userIn();
 
-    const transactionSearch = await Transaction.find({
+    let transactionSearch = await Transaction.find({
       _id: {
         $eq: req.params.id,
       },
@@ -212,6 +227,16 @@ exports.updateTransaction = async (req, res) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      transactionSearch = await Transaction.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const transaction = transactionSearch[0];
     if (!transaction) {
       return res.status(404).json({ message: "transaction not found !" });
@@ -237,7 +262,7 @@ exports.deleteTransaction = async (req, res, next) => {
   try {
     const userIn = await req.userIn();
 
-    const transactionSearch = await Transaction.find({
+    let transactionSearch = await Transaction.find({
       _id: {
         $eq: req.params.id,
       },
@@ -245,6 +270,16 @@ exports.deleteTransaction = async (req, res, next) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      transactionSearch = await Transaction.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const transaction = transactionSearch[0];
     if (!transaction)
       return res.status(404).json({ message: `transaction not found !` });

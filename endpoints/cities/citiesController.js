@@ -8,7 +8,12 @@ exports.getAllCities = async (req, res, next) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
   const userIn = await req.userIn();
-  queryObj.user = userIn._id;
+  if (
+    !userIn.role.slug === "super-administrateur" ||
+    !userIn.role.slug === "admin"
+  ) {
+    queryObj.user = userIn._id;
+  }
   try {
     const cities = await City.find(queryObj)
       .limit(limit * 1)
@@ -31,7 +36,7 @@ exports.getCityById = async (req, res) => {
     // get city type by id
     const userIn = await req.userIn();
 
-    const citySearch = await City.find({
+    let citySearch = await City.find({
       _id: {
         $eq: req.params.id,
       },
@@ -39,6 +44,16 @@ exports.getCityById = async (req, res) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      citySearch = await City.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const city = citySearch[0];
     if (!city)
       return res.status(404).json({
@@ -75,7 +90,7 @@ exports.updateCity = async (req, res) => {
   try {
     const userIn = await req.userIn();
 
-    const citySearch = await City.find({
+    let citySearch = await City.find({
       _id: {
         $eq: req.params.id,
       },
@@ -83,6 +98,16 @@ exports.updateCity = async (req, res) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      citySearch = await City.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const city = citySearch[0];
     if (!city) {
       return res.status(404).json({ message: "city not found !" });
@@ -104,7 +129,7 @@ exports.deleteCity = async (req, res, next) => {
   try {
     const userIn = await req.userIn();
 
-    const citySearch = await City.find({
+    let citySearch = await City.find({
       _id: {
         $eq: req.params.id,
       },
@@ -112,6 +137,16 @@ exports.deleteCity = async (req, res, next) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      citySearch = await City.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const city = citySearch[0];
     if (!city) return res.status(404).json({ message: `city not found !` });
     await City.findByIdAndDelete(req.params.id);

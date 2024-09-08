@@ -8,7 +8,12 @@ exports.getAllCountries = async (req, res, next) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
   const userIn = await req.userIn();
-  queryObj.user = userIn._id;
+  if (
+    !userIn.role.slug === "super-administrateur" ||
+    !userIn.role.slug === "admin"
+  ) {
+    queryObj.user = userIn._id;
+  }
   try {
     const countries = await Country.find(queryObj)
       .limit(limit * 1)
@@ -31,7 +36,7 @@ exports.getCountryById = async (req, res) => {
     // get country type by id
     const userIn = await req.userIn();
 
-    const countrySearch = await Country.find({
+    let countrySearch = await Country.find({
       _id: {
         $eq: req.params.id,
       },
@@ -39,6 +44,16 @@ exports.getCountryById = async (req, res) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      countrySearch = await Country.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const country = countrySearch[0];
     if (!country)
       return res.status(404).json({
@@ -76,7 +91,7 @@ exports.updateCountry = async (req, res) => {
   try {
     const userIn = await req.userIn();
 
-    const countrySearch = await Country.find({
+    let countrySearch = await Country.find({
       _id: {
         $eq: req.params.id,
       },
@@ -84,6 +99,16 @@ exports.updateCountry = async (req, res) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      countrySearch = await Country.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const country = countrySearch[0];
     if (!country) {
       return res.status(404).json({ message: "country not found !" });
@@ -105,7 +130,7 @@ exports.deleteCountry = async (req, res, next) => {
   try {
     const userIn = await req.userIn();
 
-    const countrySearch = await Country.find({
+    let countrySearch = await Country.find({
       _id: {
         $eq: req.params.id,
       },
@@ -113,6 +138,16 @@ exports.deleteCountry = async (req, res, next) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      countrySearch = await Country.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const country = countrySearch[0];
     if (!country)
       return res.status(404).json({ message: `country not found !` });

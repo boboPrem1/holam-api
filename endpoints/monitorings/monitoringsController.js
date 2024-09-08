@@ -8,7 +8,12 @@ exports.getAllMonitorings = async (req, res, next) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
   const userIn = await req.userIn();
-  queryObj.user = userIn._id;
+  if (
+    !userIn.role.slug === "super-administrateur" ||
+    !userIn.role.slug === "admin"
+  ) {
+    queryObj.user = userIn._id;
+  }
   try {
     const monitorings = await Monitoring.find(queryObj)
       .limit(limit * 1)
@@ -31,7 +36,7 @@ exports.getMonitoringById = async (req, res) => {
     // get monitoring by id
     const userIn = await req.userIn();
 
-    const monitoringSearch = await ActivitySubCategory.find({
+    let monitoringSearch = await Monitoring.find({
       _id: {
         $eq: req.params.id,
       },
@@ -39,6 +44,16 @@ exports.getMonitoringById = async (req, res) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      monitoringSearch = await Monitoring.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const monitoring = monitoringSearch[0];
     if (!monitoring)
       return res.status(404).json({
@@ -76,7 +91,7 @@ exports.updateMonitoring = async (req, res) => {
   try {
     const userIn = await req.userIn();
 
-    const monitoringSearch = await ActivitySubCategory.find({
+    let monitoringSearch = await Monitoring.find({
       _id: {
         $eq: req.params.id,
       },
@@ -84,6 +99,16 @@ exports.updateMonitoring = async (req, res) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      monitoringSearch = await Monitoring.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const monitoring = monitoringSearch[0];
     if (!monitoring) {
       return res.status(404).json({ message: "monitoring not found !" });
@@ -109,7 +134,7 @@ exports.deleteMonitoring = async (req, res) => {
   try {
     const userIn = await req.userIn();
 
-    const monitoringSearch = await ActivitySubCategory.find({
+    let monitoringSearch = await Monitoring.find({
       _id: {
         $eq: req.params.id,
       },
@@ -117,6 +142,16 @@ exports.deleteMonitoring = async (req, res) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      monitoringSearch = await Monitoring.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const monitoring = monitoringSearch[0];
     if (!monitoring)
       return res.status(404).json({ message: `monitoring not found !` });

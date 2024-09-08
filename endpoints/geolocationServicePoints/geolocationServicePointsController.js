@@ -8,7 +8,12 @@ exports.getAllGeolocationServicePoints = async (req, res, next) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
   const userIn = await req.userIn();
-  queryObj.user = userIn._id;
+  if (
+    !userIn.role.slug === "super-administrateur" ||
+    !userIn.role.slug === "admin"
+  ) {
+    queryObj.user = userIn._id;
+  }
   try {
     const geolocationServicePoints = await GeolocationServicePoint.find(
       queryObj
@@ -33,7 +38,7 @@ exports.getGeolocationServicePointById = async (req, res) => {
     // get geolocationServicePoint by id
     const userIn = await req.userIn();
 
-    const geolocationServicePointSearch = await GeolocationServicePoint.find({
+    let geolocationServicePointSearch = await GeolocationServicePoint.find({
       _id: {
         $eq: req.params.id,
       },
@@ -41,6 +46,16 @@ exports.getGeolocationServicePointById = async (req, res) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      geolocationServicePointSearch = await GeolocationServicePoint.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const geolocationServicePoint = geolocationServicePointSearch[0];
     if (!geolocationServicePoint)
       return res.status(404).json({
@@ -80,7 +95,7 @@ exports.updateGeolocationServicePoint = async (req, res) => {
   try {
     const userIn = await req.userIn();
 
-    const geolocationServicePointSearch = await GeolocationServicePoint.find({
+    let geolocationServicePointSearch = await GeolocationServicePoint.find({
       _id: {
         $eq: req.params.id,
       },
@@ -88,6 +103,16 @@ exports.updateGeolocationServicePoint = async (req, res) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      geolocationServicePointSearch = await GeolocationServicePoint.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const geolocationServicePoint = geolocationServicePointSearch[0];
     if (!geolocationServicePoint) {
       return res
@@ -115,7 +140,7 @@ exports.deleteGeolocationServicePoint = async (req, res, next) => {
   try {
     const userIn = await req.userIn();
 
-    const geolocationServicePointSearch = await GeolocationServicePoint.find({
+    let geolocationServicePointSearch = await GeolocationServicePoint.find({
       _id: {
         $eq: req.params.id,
       },
@@ -123,6 +148,16 @@ exports.deleteGeolocationServicePoint = async (req, res, next) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      geolocationServicePointSearch = await GeolocationServicePoint.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const geolocationServicePoint = geolocationServicePointSearch[0];
     if (!geolocationServicePoint)
       return res

@@ -9,7 +9,12 @@ exports.getAllUserRoles = async (req, res) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
   const userIn = await req.userIn();
-  queryObj.user = userIn._id;
+  if (
+    !userIn.role.slug === "super-administrateur" ||
+    !userIn.role.slug === "admin"
+  ) {
+    queryObj.user = userIn._id;
+  }
   try {
     const userRoles = await UserRole.find(queryObj)
       .limit(limit * 1)
@@ -31,10 +36,30 @@ exports.getAllUserRoles = async (req, res) => {
 exports.getUserRoleById = async (req, res) => {
   try {
     // get UserRole by id
-    const userRoles = await UserRole.findById(req.params.id);
-    if (!UserRole)
+    const userIn = await req.userIn();
+    let userRoleSearch = await UserRole.find({
+      _id: {
+        $eq: req.params.id,
+      },
+      user: {
+        $eq: userIn._id,
+      },
+    });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      userRoleSearch = await UserRole.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
+    const userRole = userRoleSearch[0];
+    if (!userRole) {
       return res.status(404).json({ message: CustomUtils.consts.NOT_FOUND });
-    res.status(200).json(userRoles);
+    }
+    res.status(200).json(userRole);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -67,7 +92,7 @@ exports.updateUserRole = async (req, res) => {
   try {
     const userIn = await req.userIn();
 
-    const userRoleSearch = await UserRole.find({
+    let userRoleSearch = await UserRole.find({
       _id: {
         $eq: req.params.id,
       },
@@ -75,8 +100,18 @@ exports.updateUserRole = async (req, res) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      userRoleSearch = await UserRole.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const userRole = userRoleSearch[0];
-    if (!UserRole) {
+    if (!userRole) {
       return res.status(404).json({ message: CustomUtils.consts.NOT_FOUND });
     }
     const updated = await UserRole.findByIdAndUpdate(req.params.id, req.body, {
@@ -96,7 +131,7 @@ exports.deleteUserRole = async (req, res) => {
   try {
     const userIn = await req.userIn();
 
-    const userRoleSearch = await UserRole.find({
+    let userRoleSearch = await UserRole.find({
       _id: {
         $eq: req.params.id,
       },
@@ -104,6 +139,16 @@ exports.deleteUserRole = async (req, res) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      userRoleSearch = await UserRole.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const userRole = userRoleSearch[0];
     if (!userRole) {
       return res.status(404).json({ message: CustomUtils.consts.NOT_FOUND });

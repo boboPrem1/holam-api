@@ -8,7 +8,12 @@ exports.getAllApiKeys = async (req, res, next) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
   const userIn = await req.userIn();
-  queryObj.user = userIn._id;
+  if (
+    !userIn.role.slug === "super-administrateur" ||
+    !userIn.role.slug === "admin"
+  ) {
+    queryObj.user = userIn._id;
+  }
   try {
     const ApiKeys = await ApiKey.find(queryObj)
       .limit(limit * 1)
@@ -31,7 +36,7 @@ exports.getApiKeyById = async (req, res) => {
     // get opportunity type by id
     const userIn = await req.userIn();
 
-    const apiKeySearch = await ApiKey.find({
+    let apiKeySearch = await ApiKey.find({
       _id: {
         $eq: req.params.id,
       },
@@ -39,6 +44,16 @@ exports.getApiKeyById = async (req, res) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      apiKeySearch = await ApiKey.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const apiKey = apiKeySearch[0];
     if (!apiKey)
       return res.status(404).json({
@@ -86,7 +101,7 @@ exports.updateApiKey = async (req, res) => {
   try {
     const userIn = await req.userIn();
 
-    const apiKeySearch = await ApiKey.find({
+    let apiKeySearch = await ApiKey.find({
       _id: {
         $eq: req.params.id,
       },
@@ -94,6 +109,16 @@ exports.updateApiKey = async (req, res) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      apiKeySearch = await ApiKey.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const apiKey = apiKeySearch[0];
     if (!apiKey) {
       return res.status(404).json({ message: "apiKey not found !" });
@@ -115,7 +140,7 @@ exports.deleteApiKey = async (req, res, next) => {
   try {
     const userIn = await req.userIn();
 
-    const apiKeySearch = await ApiKey.find({
+    let apiKeySearch = await ApiKey.find({
       _id: {
         $eq: req.params.id,
       },
@@ -123,6 +148,16 @@ exports.deleteApiKey = async (req, res, next) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      apiKeySearch = await ApiKey.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const apiKey = apiKeySearch[0];
     if (!apiKey) return res.status(404).json({ message: `apiKey not found !` });
     await ApiKey.findByIdAndDelete(req.params.id);

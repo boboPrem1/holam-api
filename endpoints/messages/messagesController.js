@@ -8,7 +8,12 @@ exports.getAllMessages = async (req, res, next) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
   const userIn = await req.userIn();
-  queryObj.user = userIn._id;
+  if (
+    !userIn.role.slug === "super-administrateur" ||
+    !userIn.role.slug === "admin"
+  ) {
+    queryObj.user = userIn._id;
+  }
   try {
     const messages = await Message.find(queryObj)
       .limit(limit * 1)
@@ -31,7 +36,7 @@ exports.getMessageById = async (req, res) => {
     // get message by id
     const userIn = await req.userIn();
 
-    const messageSearch = await Message.find({
+    let messageSearch = await Message.find({
       _id: {
         $eq: req.params.id,
       },
@@ -39,6 +44,16 @@ exports.getMessageById = async (req, res) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      messageSearch = await Message.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const message = messageSearch[0];
     if (!message)
       return res.status(404).json({
@@ -75,7 +90,7 @@ exports.updateMessage = async (req, res) => {
   try {
     const userIn = await req.userIn();
 
-    const messageSearch = await Message.find({
+    let messageSearch = await Message.find({
       _id: {
         $eq: req.params.id,
       },
@@ -83,6 +98,16 @@ exports.updateMessage = async (req, res) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      messageSearch = await Message.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const message = messageSearch[0];
     if (!message) {
       return res.status(404).json({ message: "message not found !" });
@@ -104,7 +129,7 @@ exports.deleteMessage = async (req, res, next) => {
   try {
     const userIn = await req.userIn();
 
-    const messageSearch = await Message.find({
+    let messageSearch = await Message.find({
       _id: {
         $eq: req.params.id,
       },
@@ -112,8 +137,19 @@ exports.deleteMessage = async (req, res, next) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      messageSearch = await Message.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const message = messageSearch[0];
-    if (!message) return res.status(404).json({ message: `message not found !` });
+    if (!message)
+      return res.status(404).json({ message: `message not found !` });
     await Message.findByIdAndDelete(req.params.id);
     res.status(200).json({ message: "message deleted successfully !" });
   } catch (error) {

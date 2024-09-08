@@ -8,7 +8,12 @@ exports.getAllActivities = async (req, res, next) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
   const userIn = await req.userIn();
-  queryObj.user = userIn._id;
+  if (
+    !userIn.role.slug === "super-administrateur" ||
+    !userIn.role.slug === "admin"
+  ) {
+    queryObj.user = userIn._id;
+  }
   try {
     const activities = await Activity.find(queryObj)
       .limit(limit * 1)
@@ -31,7 +36,7 @@ exports.getActivityById = async (req, res) => {
   try {
     const userIn = await req.userIn();
     // get activity by id
-    const activitySearch = await Activity.find({
+    let activitySearch = await Activity.find({
       _id: {
         $eq: req.params.id,
       },
@@ -39,6 +44,16 @@ exports.getActivityById = async (req, res) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      activitySearch = await Activity.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const activity = activitySearch[0];
     if (!activity)
       return res.status(404).json({
@@ -83,7 +98,7 @@ exports.createActivity = async (req, res) => {
 exports.updateActivity = async (req, res) => {
   try {
     const userIn = await req.userIn();
-    const activitySearch = await Activity.find({
+    let activitySearch = await Activity.find({
       _id: {
         $eq: req.params.id,
       },
@@ -91,6 +106,16 @@ exports.updateActivity = async (req, res) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      activitySearch = await Activity.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const activity = activitySearch[0];
     if (!activity) {
       return res.status(404).json({ message: "activity not found !" });
@@ -111,7 +136,8 @@ exports.updateActivity = async (req, res) => {
 exports.deleteActivity = async (req, res, next) => {
   try {
     const userIn = await req.userIn();
-    const activitySearch = await Activity.find({
+
+    let activitySearch = await Activity.find({
       _id: {
         $eq: req.params.id,
       },
@@ -119,6 +145,16 @@ exports.deleteActivity = async (req, res, next) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      activitySearch = await Activity.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const activity = activitySearch[0];
     if (!activity)
       return res.status(404).json({ message: `activity not found !` });

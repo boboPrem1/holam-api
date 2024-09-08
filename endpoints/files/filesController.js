@@ -8,7 +8,12 @@ exports.getAllFiles = async (req, res, next) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
   const userIn = await req.userIn();
-  queryObj.user = userIn._id;
+  if (
+    !userIn.role.slug === "super-administrateur" ||
+    !userIn.role.slug === "admin"
+  ) {
+    queryObj.user = userIn._id;
+  }
   try {
     const files = await File.find(queryObj)
       .limit(limit * 1)
@@ -31,7 +36,7 @@ exports.getFileById = async (req, res) => {
     // get file type by id
     const userIn = await req.userIn();
 
-    const fileSearch = await File.find({
+    let fileSearch = await File.find({
       _id: {
         $eq: req.params.id,
       },
@@ -39,6 +44,16 @@ exports.getFileById = async (req, res) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      fileSearch = await File.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const file = fileSearch[0];
     if (!file)
       return res.status(404).json({
@@ -76,7 +91,7 @@ exports.updateFile = async (req, res) => {
   try {
     const userIn = await req.userIn();
 
-    const fileSearch = await File.find({
+    let fileSearch = await File.find({
       _id: {
         $eq: req.params.id,
       },
@@ -84,6 +99,16 @@ exports.updateFile = async (req, res) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      fileSearch = await File.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const file = fileSearch[0];
     if (!file) {
       return res.status(404).json({ message: "file not found !" });
@@ -105,7 +130,7 @@ exports.deleteFile = async (req, res, next) => {
   try {
     const userIn = await req.userIn();
 
-    const fileSearch = await File.find({
+    let fileSearch = await File.find({
       _id: {
         $eq: req.params.id,
       },
@@ -113,6 +138,16 @@ exports.deleteFile = async (req, res, next) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      fileSearch = await File.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const file = fileSearch[0];
     if (!file) return res.status(404).json({ message: `file not found !` });
     await File.findByIdAndDelete(req.params.id);

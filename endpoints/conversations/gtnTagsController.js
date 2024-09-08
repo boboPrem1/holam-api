@@ -8,7 +8,12 @@ exports.getAllGtnTags = async (req, res, next) => {
   const { limit, page, sort, fields } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
   const userIn = await req.userIn();
-  queryObj.user = userIn._id;
+  if (
+    !userIn.role.slug === "super-administrateur" ||
+    !userIn.role.slug === "admin"
+  ) {
+    queryObj.user = userIn._id;
+  }
   try {
     const tags = await GtnTag.find(queryObj)
       .limit(limit * 1)
@@ -31,7 +36,7 @@ exports.getGtnTagById = async (req, res) => {
     // get tag type by id
     const userIn = await req.userIn();
 
-    const tagSearch = await GtnTag.find({
+    let tagSearch = await GtnTag.find({
       _id: {
         $eq: req.params.id,
       },
@@ -39,6 +44,16 @@ exports.getGtnTagById = async (req, res) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      tagSearch = await GtnTag.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const tag = tagSearch[0];
     if (!tag)
       return res.status(404).json({
@@ -75,7 +90,7 @@ exports.updateGtnTag = async (req, res) => {
   try {
     const userIn = await req.userIn();
 
-    const tagSearch = await GtnTag.find({
+    let tagSearch = await GtnTag.find({
       _id: {
         $eq: req.params.id,
       },
@@ -83,6 +98,16 @@ exports.updateGtnTag = async (req, res) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      tagSearch = await GtnTag.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const tag = tagSearch[0];
     if (!tag) {
       return res.status(404).json({ message: "tag not found !" });
@@ -104,7 +129,7 @@ exports.deleteGtnTag = async (req, res, next) => {
   try {
     const userIn = await req.userIn();
 
-    const tagSearch = await GtnTag.find({
+    let tagSearch = await GtnTag.find({
       _id: {
         $eq: req.params.id,
       },
@@ -112,6 +137,16 @@ exports.deleteGtnTag = async (req, res, next) => {
         $eq: userIn._id,
       },
     });
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "admin"
+    ) {
+      tagSearch = await GtnTag.find({
+        _id: {
+          $eq: req.params.id,
+        },
+      });
+    }
     const tag = tagSearch[0];
     if (!tag) return res.status(404).json({ message: `tag not found !` });
     await GtnTag.findByIdAndDelete(req.params.id);
