@@ -403,7 +403,6 @@
 //       way = "api_key";
 //     }
 
-
 //     if (!token) {
 //       return res.status(401).json({
 //         message: CustomUtils.consts.NOT_LOGGED_IN,
@@ -704,10 +703,9 @@ exports.setPassword = async (req, res, next) => {
   });
 
   if (existingUser) {
-    const hashedPassword = await hashPassword(password);
     await User.findByIdAndUpdate(
       existingUser._id,
-      { password: hashedPassword, passwordIsSet: true },
+      { password, passwordIsSet: true },
       { new: true }
     );
   }
