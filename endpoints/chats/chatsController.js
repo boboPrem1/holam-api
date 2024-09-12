@@ -1,27 +1,186 @@
+// const Chat = require("./chatsModel.js");
+// const CustomUtils = require("../../utils/index.js");
+
+// // @Get all chat
+// // @Route: /api/v1/chats
+// // @Access: Public
+// exports.getAllChats = async (req, res, next) => {
+//   const { limit, page, sort, fields } = req.query;
+//   const queryObj = CustomUtils.advancedQuery(req.query);
+//   const userIn = await req.userIn();
+//   if (
+//     !userIn.role.slug == "super-administrateur" ||
+//     !userIn.role.slug == "admin"
+//   ) {
+//     queryObj.user = userIn._id;
+//   }
+//   try {
+//     const chats = await Chat.find(queryObj)
+//       .limit(limit * 1)
+//       .sort({
+//         createdAt: -1,
+//         ...sort,
+//       })
+//       .select(fields);
+//     res.status(200).json(chats);
+//   } catch (error) {
+//     res.status(404).json({ message: error.message });
+//   }
+// };
+
+// // @Get chat by id
+// // @Route: /api/v1/chats/:id
+// // @Access: Public
+// exports.getChatById = async (req, res) => {
+//   try {
+//     // get chat by id
+//     const userIn = await req.userIn();
+//     // get chat by id
+//     let chatSearch = await Chat.find({
+//       _id: {
+//         $eq: req.params.id,
+//       },
+//       user: {
+//         $eq: userIn._id,
+//       },
+//     });
+//     if (
+//       userIn.role.slug == "super-administrateur" ||
+//       userIn.role.slug == "admin"
+//     ) {
+//       chatSearch = await Chat.find({
+//         _id: {
+//           $eq: req.params.id,
+//         },
+//       });
+//     }
+//     const chat = chatSearch[0];
+//     if (!chat)
+//       return res.status(404).json({
+//         message: CustomUtils.consts.NOT_FOUND,
+//       });
+//     res.status(200).json(chat);
+//   } catch (error) {
+//     res.status(500).json({ message: error.message });
+//   }
+// };
+
+// // @Create new chat // @Route: /api/v1/chats
+// // @Access: Private
+// exports.createChat = async (req, res) => {
+//   const CustomBody = { ...req.body };
+//   const slug = CustomUtils.slugify(CustomBody.name);
+//   const userIn = await req.userIn();
+//   CustomBody.user = userIn._id;
+//   try {
+//     CustomBody.slug = slug;
+//     // create new chat
+//     const chat = await Chat.create(CustomBody);
+//     res.status(201).json(chat);
+//   } catch (error) {
+//     res.status(400).json({ message: error.message });
+//   }
+// };
+
+// // @Update chat by id
+// // @Route: /api/v1/chats/:id
+// // @Access: Private
+// exports.updateChat = async (req, res) => {
+//   try {
+//     const userIn = await req.userIn();
+
+//     let chatSearch = await Chat.find({
+//       _id: {
+//         $eq: req.params.id,
+//       },
+//       user: {
+//         $eq: userIn._id,
+//       },
+//     });
+//     if (
+//       userIn.role.slug == "super-administrateur" ||
+//       userIn.role.slug == "admin"
+//     ) {
+//       chatSearch = await Chat.find({
+//         _id: {
+//           $eq: req.params.id,
+//         },
+//       });
+//     }
+//     const chat = chatSearch[0];
+//     if (!chat) {
+//       return res.status(404).json({ message: "chat not found !" });
+//     }
+
+//     const updated = await Chat.findByIdAndUpdate(req.params.id, req.body, {
+//       new: true,
+//     });
+//     return res.status(200).json(updated);
+//   } catch (error) {
+//     res.status(500).json({ message: error.message });
+//   }
+// };
+
+// // @Delete chat by id
+// // @Route: /api/v1/chats/:id
+// // @Access: Private
+// exports.deleteChat = async (req, res, next) => {
+//   try {
+//     const userIn = await req.userIn();
+
+//     let chatSearch = await Chat.find({
+//       _id: {
+//         $eq: req.params.id,
+//       },
+//       user: {
+//         $eq: userIn._id,
+//       },
+//     });
+//     if (
+//       userIn.role.slug == "super-administrateur" ||
+//       userIn.role.slug == "admin"
+//     ) {
+//       chatSearch = await Chat.find({
+//         _id: {
+//           $eq: req.params.id,
+//         },
+//       });
+//     }
+//     const chat = chatSearch[0];
+//     if (!chat) return res.status(404).json({ message: `chat not found !` });
+//     await Chat.findByIdAndDelete(req.params.id);
+//     res.status(200).json({ message: "chat deleted successfully !" });
+//   } catch (error) {
+//     res.status(500).json({ message: error.message });
+//   }
+// };
+
 const Chat = require("./chatsModel.js");
 const CustomUtils = require("../../utils/index.js");
 
-// @Get all chat
+// @Get all chats
 // @Route: /api/v1/chats
 // @Access: Public
-exports.getAllChats = async (req, res, next) => {
-  const { limit, page, sort, fields } = req.query;
-  const queryObj = CustomUtils.advancedQuery(req.query);
-  const userIn = await req.userIn();
-  if (
-    !userIn.role.slug === "super-administrateur" ||
-    !userIn.role.slug === "admin"
-  ) {
-    queryObj.user = userIn._id;
-  }
+exports.getAllChats = async (req, res) => {
   try {
+    const { limit = 10, page = 1, sort = "-createdAt", fields } = req.query;
+    const queryObj = CustomUtils.advancedQuery(req.query);
+    const userIn = await req.userIn();
+
+    // Restreindre les chats à l'utilisateur courant s'il n'est pas super admin ou admin
+    if (
+      userIn.role.slug !== "super-administrateur" &&
+      userIn.role.slug !== "admin"
+    ) {
+      queryObj.user = userIn._id;
+    }
+
     const chats = await Chat.find(queryObj)
-      .limit(limit * 1)
-      .sort({
-        createdAt: -1,
-        ...sort,
-      })
-      .select(fields);
+      .limit(parseInt(limit))
+      .skip((page - 1) * limit)
+      .sort(sort)
+      .select(fields ? fields.split(",").join(" ") : "");
+
     res.status(200).json(chats);
   } catch (error) {
     res.status(404).json({ message: error.message });
@@ -33,49 +192,40 @@ exports.getAllChats = async (req, res, next) => {
 // @Access: Public
 exports.getChatById = async (req, res) => {
   try {
-    // get chat by id
     const userIn = await req.userIn();
-    // get chat by id
-    let chatSearch = await Chat.find({
-      _id: {
-        $eq: req.params.id,
-      },
-      user: {
-        $eq: userIn._id,
-      },
-    });
+    const queryObj = { _id: req.params.id };
+
+    // Restreindre l'accès au chat à l'utilisateur courant s'il n'est pas super admin ou admin
     if (
-      userIn.role.slug === "super-administrateur" ||
-      userIn.role.slug === "admin"
+      userIn.role.slug !== "super-administrateur" &&
+      userIn.role.slug !== "admin"
     ) {
-      chatSearch = await Chat.find({
-        _id: {
-          $eq: req.params.id,
-        },
-      });
+      queryObj.user = userIn._id;
     }
-    const chat = chatSearch[0];
-    if (!chat)
+
+    const chat = await Chat.findOne(queryObj);
+    if (!chat) {
       return res.status(404).json({
         message: CustomUtils.consts.NOT_FOUND,
       });
+    }
+
     res.status(200).json(chat);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// @Create new chat // @Route: /api/v1/chats
+// @Create new chat
+// @Route: /api/v1/chats
 // @Access: Private
 exports.createChat = async (req, res) => {
-  const CustomBody = { ...req.body };
-  const slug = CustomUtils.slugify(CustomBody.name);
-  const userIn = await req.userIn();
-  CustomBody.user = userIn._id;
   try {
-    CustomBody.slug = slug;
-    // create new chat
-    const chat = await Chat.create(CustomBody);
+    const userIn = await req.userIn();
+    const chatData = { ...req.body, user: userIn._id };
+    chatData.slug = CustomUtils.slugify(chatData.name);
+
+    const chat = await Chat.create(chatData);
     res.status(201).json(chat);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -88,34 +238,26 @@ exports.createChat = async (req, res) => {
 exports.updateChat = async (req, res) => {
   try {
     const userIn = await req.userIn();
+    const queryObj = { _id: req.params.id };
 
-    let chatSearch = await Chat.find({
-      _id: {
-        $eq: req.params.id,
-      },
-      user: {
-        $eq: userIn._id,
-      },
-    });
+    // Restreindre l'accès au chat à l'utilisateur courant s'il n'est pas super admin ou admin
     if (
-      userIn.role.slug === "super-administrateur" ||
-      userIn.role.slug === "admin"
+      userIn.role.slug !== "super-administrateur" &&
+      userIn.role.slug !== "admin"
     ) {
-      chatSearch = await Chat.find({
-        _id: {
-          $eq: req.params.id,
-        },
-      });
-    }
-    const chat = chatSearch[0];
-    if (!chat) {
-      return res.status(404).json({ message: "chat not found !" });
+      queryObj.user = userIn._id;
     }
 
-    const updated = await Chat.findByIdAndUpdate(req.params.id, req.body, {
+    const chat = await Chat.findOneAndUpdate(queryObj, req.body, {
       new: true,
+      runValidators: true,
     });
-    return res.status(200).json(updated);
+
+    if (!chat) {
+      return res.status(404).json({ message: "Chat not found!" });
+    }
+
+    res.status(200).json(chat);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -124,32 +266,26 @@ exports.updateChat = async (req, res) => {
 // @Delete chat by id
 // @Route: /api/v1/chats/:id
 // @Access: Private
-exports.deleteChat = async (req, res, next) => {
+exports.deleteChat = async (req, res) => {
   try {
     const userIn = await req.userIn();
+    const queryObj = { _id: req.params.id };
 
-    let chatSearch = await Chat.find({
-      _id: {
-        $eq: req.params.id,
-      },
-      user: {
-        $eq: userIn._id,
-      },
-    });
+    // Restreindre l'accès au chat à l'utilisateur courant s'il n'est pas super admin ou admin
     if (
-      userIn.role.slug === "super-administrateur" ||
-      userIn.role.slug === "admin"
+      userIn.role.slug !== "super-administrateur" &&
+      userIn.role.slug !== "admin"
     ) {
-      chatSearch = await Chat.find({
-        _id: {
-          $eq: req.params.id,
-        },
-      });
+      queryObj.user = userIn._id;
     }
-    const chat = chatSearch[0];
-    if (!chat) return res.status(404).json({ message: `chat not found !` });
-    await Chat.findByIdAndDelete(req.params.id);
-    res.status(200).json({ message: "chat deleted successfully !" });
+
+    const chat = await Chat.findOneAndDelete(queryObj);
+
+    if (!chat) {
+      return res.status(404).json({ message: "Chat not found!" });
+    }
+
+    res.status(200).json({ message: "Chat deleted successfully!" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

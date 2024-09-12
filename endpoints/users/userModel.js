@@ -8,6 +8,14 @@ const userSchema = mongoose.Schema(
       type: String,
       default: "",
     },
+    age: {
+      type: String,
+      default: "",
+    },
+    profession: {
+      type: String,
+      default: "",
+    },
     followers: {
       type: [mongoose.Schema.Types.ObjectId],
       ref: "User",

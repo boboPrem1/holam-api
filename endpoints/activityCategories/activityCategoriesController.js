@@ -102,15 +102,15 @@ exports.updateActivityCategory = async (req, res) => {
 exports.deleteActivityCategory = async (req, res, next) => {
   try {
     const userIn = await req.userIn();
-    const activityCategorySearch = await ActivityCategory.find({
-      _id: {
-        $eq: req.params.id,
-      },
-      user: {
-        $eq: userIn._id,
-      },
-    });
-    const activityCategory = activityCategorySearch[0];
+    const query = { _id: req.params.id };
+
+    if (
+      userIn.role.slug !== "super-administrateur" &&
+      userIn.role.slug !== "admin"
+    ) {
+      query.user = userIn._id;
+    }
+    const activityCategory = await ActivityCategory.findOneAndDelete(query);
     if (!activityCategory)
       return res.status(404).json({ message: `activityCategory not found !` });
     // await ActivityCategory.findByIdAndDelete(req.params.id);

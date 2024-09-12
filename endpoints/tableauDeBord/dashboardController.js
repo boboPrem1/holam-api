@@ -44,9 +44,9 @@ exports.getAllTotaux = async (req, res) => {
         $eq: viewed._id,
       },
     };
-  } else if (userIn.role.slug === "super-administrateur") {
+  } else if (userIn.role.slug == "super-administrateur") {
     filterUserDatas = {};
-  } else if (userIn.role.slug === "admin") {
+  } else if (userIn.role.slug == "admin") {
     filterUserDatas = {};
   } else {
     filterUserDatas = {
@@ -55,8 +55,6 @@ exports.getAllTotaux = async (req, res) => {
       },
     };
   }
-
-
 
   try {
     // users

@@ -5,18 +5,24 @@ const CustomUtils = require("../../utils/index.js");
 // @Route: /api/v1/activitySubCategories
 // @Access: Public
 exports.getAllActivitySubCategories = async (req, res, next) => {
-  const { limit, page, sort, fields } = req.query;
-  const queryObj = CustomUtils.advancedQuery(req.query);
-  // const userIn = await req.userIn();
-  // queryObj.user = userIn._id;
   try {
+    const { limit = 10, page = 1, sort = "-createdAt", fields } = req.query;
+    const queryObj = CustomUtils.advancedQuery(req.query);
+    const userIn = await req.userIn();
+
+    if (
+      userIn.role.slug !== "super-administrateur" &&
+      userIn.role.slug !== "admin"
+    ) {
+      queryObj.user = userIn._id;
+    }
+
     const activitySubCategories = await ActivitySubCategory.find(queryObj)
-      .limit(limit * 1)
-      .sort({
-        createdAt: -1,
-        ...sort,
-      })
-      .select(fields);
+      .limit(parseInt(limit, 10))
+      .skip((page - 1) * limit)
+      .sort(sort)
+      .select(fields ? fields.split(",").join(" ") : "");
+
     res.status(200).json(activitySubCategories);
   } catch (error) {
     res.status(404).json({ message: error.message });
@@ -29,18 +35,24 @@ exports.getAllActivitySubCategories = async (req, res, next) => {
 exports.getActivitySubCategoryById = async (req, res) => {
   try {
     // get activitySubCategory type by id
-    const userIn = await req.userIn();
 
-    const activitySubCategorySearch = await ActivitySubCategory.find({
-      _id: {
-        $eq: req.params.id,
-      },
-    });
-    const activitySubCategory = activitySubCategorySearch[0];
+    const userIn = await req.userIn();
+    const query = { _id: req.params.id };
+
+    if (
+      userIn.role.slug !== "super-administrateur" &&
+      userIn.role.slug !== "admin"
+    ) {
+      query.user = userIn._id;
+    }
+
+    const activitySubCategory = await ActivitySubCategory.findOne(query);
+
     if (!activitySubCategory)
       return res.status(404).json({
         message: CustomUtils.consts.NOT_FOUND,
       });
+
     res.status(200).json(activitySubCategory);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -51,13 +63,13 @@ exports.getActivitySubCategoryById = async (req, res) => {
 // @Route: /api/v1/activitySubCategory
 // @Access: Private
 exports.createActivitySubCategory = async (req, res) => {
-  const CustomBody = { ...req.body };
-  const slug = CustomUtils.slugify(CustomBody.name);
-
-  const userIn = await req.userIn();
-  CustomBody.user = userIn._id;
   try {
-    CustomBody.slug = slug;
+    const userIn = await req.userIn();
+    const CustomBody = {
+      ...req.body,
+      user: userIn._id,
+      slug: CustomUtils.slugify(CustomBody.name),
+    };
     // create new activitySubCategory type
     const activitySubCategory = await ActivitySubCategory.create(CustomBody);
     res.status(201).json(activitySubCategory);
@@ -72,26 +84,30 @@ exports.createActivitySubCategory = async (req, res) => {
 exports.updateActivitySubCategory = async (req, res) => {
   try {
     const userIn = await req.userIn();
-    const activitySubCategorySearch = await ActivitySubCategory.find({
-      _id: {
-        $eq: req.params.id,
-      },
-    });
-    const activitySubCategory = activitySubCategorySearch[0];
-    if (!activitySubCategory) {
-      return res
-        .status(404)
-        .json({ message: "activitySubCategory not found !" });
+    const query = { _id: req.params.id };
+
+    if (
+      userIn.role.slug !== "super-administrateur" &&
+      userIn.role.slug !== "admin"
+    ) {
+      query.user = userIn._id;
     }
 
-    const updated = await ActivitySubCategory.findByIdAndUpdate(
-      req.params.id,
+    const activitySubCategory = await ActivitySubCategory.findOneAndUpdate(
+      query,
       req.body,
       {
         new: true,
       }
     );
-    return res.status(200).json(updated);
+
+    if (!activitySubCategory) {
+      return res
+        .status(404)
+        .json({ message: "Activity sub category not found !" });
+    }
+
+    return res.status(200).json(activitySubCategory);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -103,23 +119,26 @@ exports.updateActivitySubCategory = async (req, res) => {
 exports.deleteActivitySubCategory = async (req, res) => {
   try {
     const userIn = await req.userIn();
-    const activitySubCategorySearch = await ActivitySubCategory.find({
-      _id: {
-        $eq: req.params.id,
-      },
-      user: {
-        $eq: userIn._id,
-      },
-    });
-    const activitySubCategory = activitySubCategorySearch[0];
+    const query = { _id: req.params.id };
+
+    if (
+      userIn.role.slug !== "super-administrateur" &&
+      userIn.role.slug !== "admin"
+    ) {
+      query.user = userIn._id;
+    }
+
+    const activitySubCategory = await ActivitySubCategory.findOneAndDelete(
+      query
+    );
+
     if (!activitySubCategory)
       return res
         .status(404)
-        .json({ message: `activitySubCategory not found !` });
-    // await ActivitySubCategory.findByIdAndDelete(req.params.id);
+        .json({ message: `Activity sub category not found !` });
     res
       .status(200)
-      .json({ message: "activitySubCategory deleted successfully !" });
+      .json({ message: "Activity sub category deleted successfully !" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

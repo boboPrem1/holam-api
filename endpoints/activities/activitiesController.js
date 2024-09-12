@@ -1,33 +1,33 @@
 const Activity = require("./activitiesModel.js");
 const CustomUtils = require("../../utils/index.js");
 
-// @Get all activitiess
+// @Get all activities
 // @Route: /api/v1/activities
 // @Access: Public
-exports.getAllActivities = async (req, res, next) => {
-  const { limit, page, sort, fields } = req.query;
-  const queryObj = CustomUtils.advancedQuery(req.query);
-  const userIn = await req.userIn();
-  if (
-    !userIn.role.slug === "super-administrateur" ||
-    !userIn.role.slug === "admin"
-  ) {
-    queryObj.user = userIn._id;
-  }
+exports.getAllActivities = async (req, res) => {
   try {
+    const { limit = 10, page = 1, sort = "-createdAt", fields } = req.query;
+    const queryObj = CustomUtils.advancedQuery(req.query);
+    const userIn = await req.userIn();
+
+    if (
+      userIn.role.slug !== "super-administrateur" &&
+      userIn.role.slug !== "admin"
+    ) {
+      queryObj.user = userIn._id;
+    }
+
     const activities = await Activity.find(queryObj)
-      .limit(limit * 1)
-      .sort({
-        createdAt: -1,
-        ...sort,
-      })
-      .select(fields);
+      .limit(parseInt(limit, 10))
+      .skip((page - 1) * limit)
+      .sort(sort)
+      .select(fields ? fields.split(",").join(" ") : "");
+
     res.status(200).json(activities);
   } catch (error) {
-    res.status(404).json({ message: error.message });
+    res.status(500).json({ message: error.message });
   }
 };
-//
 
 // @Get activity by id
 // @Route: /api/v1/activities/:id
@@ -35,30 +35,21 @@ exports.getAllActivities = async (req, res, next) => {
 exports.getActivityById = async (req, res) => {
   try {
     const userIn = await req.userIn();
-    // get activity by id
-    let activitySearch = await Activity.find({
-      _id: {
-        $eq: req.params.id,
-      },
-      user: {
-        $eq: userIn._id,
-      },
-    });
+    const query = { _id: req.params.id };
+
     if (
-      userIn.role.slug === "super-administrateur" ||
-      userIn.role.slug === "admin"
+      userIn.role.slug !== "super-administrateur" &&
+      userIn.role.slug !== "admin"
     ) {
-      activitySearch = await Activity.find({
-        _id: {
-          $eq: req.params.id,
-        },
-      });
+      query.user = userIn._id;
     }
-    const activity = activitySearch[0];
-    if (!activity)
-      return res.status(404).json({
-        message: CustomUtils.consts.NOT_FOUND,
-      });
+
+    const activity = await Activity.findOne(query);
+
+    if (!activity) {
+      return res.status(404).json({ message: CustomUtils.consts.NOT_FOUND });
+    }
+
     res.status(200).json(activity);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -69,22 +60,18 @@ exports.getActivityById = async (req, res) => {
 // @Route: /api/v1/activities
 // @Access: Private
 exports.createActivity = async (req, res) => {
-  const CustomBody = { ...req.body };
-  const slug = CustomUtils.slugify(CustomBody.description);
-
-  const userIn = await req.userIn();
-  CustomBody.user = userIn._id;
   try {
-    CustomBody.slug = slug;
-    const initialLocation = CustomBody.location.split(" ");
-
-    const trueLocation = {
-      type: "Point",
-      coordinates: initialLocation,
+    const userIn = await req.userIn();
+    const CustomBody = {
+      ...req.body,
+      user: userIn._id,
+      slug: CustomUtils.slugify(req.body.description),
+      location: {
+        type: "Point",
+        coordinates: req.body.location.split(" ").map(Number),
+      },
     };
 
-    CustomBody.location = trueLocation;
-    // create new activity
     const activity = await Activity.create(CustomBody);
     res.status(201).json(activity);
   } catch (error) {
@@ -98,33 +85,24 @@ exports.createActivity = async (req, res) => {
 exports.updateActivity = async (req, res) => {
   try {
     const userIn = await req.userIn();
-    let activitySearch = await Activity.find({
-      _id: {
-        $eq: req.params.id,
-      },
-      user: {
-        $eq: userIn._id,
-      },
-    });
+    const query = { _id: req.params.id };
+
     if (
-      userIn.role.slug === "super-administrateur" ||
-      userIn.role.slug === "admin"
+      userIn.role.slug !== "super-administrateur" &&
+      userIn.role.slug !== "admin"
     ) {
-      activitySearch = await Activity.find({
-        _id: {
-          $eq: req.params.id,
-        },
-      });
-    }
-    const activity = activitySearch[0];
-    if (!activity) {
-      return res.status(404).json({ message: "activity not found !" });
+      query.user = userIn._id;
     }
 
-    const updated = await Activity.findByIdAndUpdate(req.params.id, req.body, {
+    const activity = await Activity.findOneAndUpdate(query, req.body, {
       new: true,
     });
-    return res.status(200).json(updated);
+
+    if (!activity) {
+      return res.status(404).json({ message: "Activity not found!" });
+    }
+
+    res.status(200).json(activity);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -133,33 +111,25 @@ exports.updateActivity = async (req, res) => {
 // @Delete activity by id
 // @Route: /api/v1/activities/:id
 // @Access: Private
-exports.deleteActivity = async (req, res, next) => {
+exports.deleteActivity = async (req, res) => {
   try {
     const userIn = await req.userIn();
+    const query = { _id: req.params.id };
 
-    let activitySearch = await Activity.find({
-      _id: {
-        $eq: req.params.id,
-      },
-      user: {
-        $eq: userIn._id,
-      },
-    });
     if (
-      userIn.role.slug === "super-administrateur" ||
-      userIn.role.slug === "admin"
+      userIn.role.slug !== "super-administrateur" &&
+      userIn.role.slug !== "admin"
     ) {
-      activitySearch = await Activity.find({
-        _id: {
-          $eq: req.params.id,
-        },
-      });
+      query.user = userIn._id;
     }
-    const activity = activitySearch[0];
-    if (!activity)
-      return res.status(404).json({ message: `activity not found !` });
-    await Activity.findByIdAndDelete(req.params.id);
-    res.status(200).json({ message: "activity deleted successfully !" });
+
+    const activity = await Activity.findOneAndDelete(query);
+
+    if (!activity) {
+      return res.status(404).json({ message: "Activity not found!" });
+    }
+
+    res.status(200).json({ message: "Activity deleted successfully!" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
