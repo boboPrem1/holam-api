@@ -561,6 +561,7 @@ exports.sign = async (req, res, next) => {
 
   if (existingUser && !existingUser.passwordIsSet) {
     otp = await createAndSendOtp(existingUser._id, indicatif, number);
+
     return res.status(200).json({
       existing: true,
       created: false,
@@ -576,6 +577,7 @@ exports.sign = async (req, res, next) => {
   });
 
   otp = await createAndSendOtp(newUser._id, indicatif, number);
+  console.log(otp);
   return res.status(200).json({
     existing: false,
     created: true,
@@ -617,7 +619,8 @@ async function createAndSendOtp(userId, indicatif, number) {
   };
 
   try {
-    await snsClient.send(new PublishCommand(params));
+    const result = await snsClient.send(new PublishCommand(params));
+    console.log(result);
   } catch (error) {
     throw new Error("Failed to send OTP");
   }
