@@ -6,7 +6,7 @@ const CustomUtils = require("../../utils/index.js");
 // @Access: Public
 exports.getAllActivitySubCategories = async (req, res, next) => {
   try {
-    const { limit = 10, page = 1, sort = "-createdAt", fields } = req.query;
+    const { limit = 10, page = 1, sort, fields } = req.query;
     const queryObj = CustomUtils.advancedQuery(req.query);
     const userIn = await req.userIn();
 
