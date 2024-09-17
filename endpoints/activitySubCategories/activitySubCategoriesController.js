@@ -68,7 +68,7 @@ exports.createActivitySubCategory = async (req, res) => {
     const CustomBody = {
       ...req.body,
       user: userIn._id,
-      slug: CustomUtils.slugify(CustomBody.name),
+      slug: CustomUtils.slugify(req.name),
     };
     // create new activitySubCategory type
     const activitySubCategory = await ActivitySubCategory.create(CustomBody);
