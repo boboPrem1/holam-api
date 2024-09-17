@@ -10,18 +10,13 @@ exports.getAllActivitySubCategories = async (req, res, next) => {
     const queryObj = CustomUtils.advancedQuery(req.query);
     const userIn = await req.userIn();
 
-    if (
-      userIn.role.slug !== "super-administrateur" &&
-      userIn.role.slug !== "admin"
-    ) {
-      queryObj.user = userIn._id;
-    }
-
     const activitySubCategories = await ActivitySubCategory.find(queryObj)
-      .limit(parseInt(limit, 10))
-      .skip((page - 1) * limit)
-      .sort(sort)
-      .select(fields ? fields.split(",").join(" ") : "");
+      .limit(limit * 1)
+      .sort({
+        createdAt: -1,
+        ...sort,
+      })
+      .select(fields);
 
     res.status(200).json(activitySubCategories);
   } catch (error) {
