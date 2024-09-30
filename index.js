@@ -220,7 +220,7 @@ const geolocationServiceAgentsRoutes = require("./endpoints/geolocationServiceAg
 const geolocationServiceClientsRoutes = require("./endpoints/geolocationServiceClients/geolocationServicesClientsRoutes");
 const geolocationServiceTransactionsRoutes = require("./endpoints/geolocationServiceTransactions/geolocationServiceTransactionsRoutes");
 const geolocationServicePointsRoutes = require("./endpoints/geolocationServicePoints/geolocationServicePointsRoutes");
-const geolocationServicePointsRoutesNeo = require("./endpoints/geolocationServicePoints/geolocationServicePointsRoutesNeo");
+const geolocationServicePointsRoutesNeo = require("./endpoints/geolocationServicePoints/geolocationServicePointsRoutesNeo.js");
 const monitoringsRoutes = require("./endpoints/monitorings/monitoringsRoutes");
 const dashboardRoutes = require("./endpoints/tableauDeBord/dashboardRoutes");
 const uploadRoutes = require("./endpoints/uploads/uploadRoutes");
@@ -277,7 +277,7 @@ app.use(
   geolocationServicePointsRoutes
 );
 app.use(
-  API_URL_BASE + "verify_point",
+  API_URL_BASE + "utils",
   geolocationServicePointsRoutesNeo
 );
 app.use(API_URL_BASE + "monitorings", monitoringsRoutes);

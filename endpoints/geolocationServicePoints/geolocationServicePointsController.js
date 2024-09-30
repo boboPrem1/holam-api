@@ -178,6 +178,7 @@ const GeolocationServiceAgent = require("../geolocationServiceAgents/geolocation
 const GeolocationServiceMaster = require("../geolocationServiceMasters/geolocationServiceMastersModel.js");
 const GeolocationServiceClient = require("../geolocationServiceClients/geolocationServicesClientsModel.js");
 const Otp = require("../otps/otpsModel.js");
+const User = require("../users/userModel.js");
 
 const isAdminOrSuperAdmin = (user) =>
   user.role.slug === "super-administrateur" || user.role.slug === "admin";
@@ -440,6 +441,36 @@ exports.createGeolocationServicePointSms = async (req, res) => {
     // const geolocationServicePoint = await GeolocationServicePoint.create(
     //   newGeolocationServicePoint
     // );
+    res.status(201).json({ success: true });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+exports.activateAgent = async (req, res) => {
+  try {
+    const userIn = await req.userIn();
+
+    if (userIn.role.slug === "agent") {
+      const agent = await GeolocationServiceAgent.findOne({
+        user: userIn._id,
+      });
+
+      if (agent.otp === req.body.code) {
+        await User.findByIdAndUpdate(
+          agent.user._id,
+          {
+            agentIsActivated: true,
+          },
+          {
+            new: true,
+          }
+        );
+      }
+    } else {
+      return res.status(403).json({ message: "Not Authorized" });
+    }
+
     res.status(201).json({ success: true });
   } catch (error) {
     res.status(400).json({ message: error.message });

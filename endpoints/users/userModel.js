@@ -53,6 +53,14 @@ const userSchema = mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    agentIsActivated: {
+      type: Boolean,
+      default: false,
+    },
+    goodToKnowIsActivated: {
+      type: Boolean,
+      default: false,
+    },
     confirmPassword: {
       type: String,
       validate: {
