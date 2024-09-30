@@ -367,6 +367,7 @@ exports.createGeolocationServicePoint = async (req, res) => {
       user: userIn._id,
     };
 
+
     const geolocationServicePoint = await GeolocationServicePoint.create(
       newGeolocationServicePoint
     );
@@ -471,6 +472,7 @@ exports.activateAgent = async (req, res) => {
     } else {
       return res.status(403).json({ message: "Not Authorized" });
     }
+    
 
     res.status(201).json({ success: true });
   } catch (error) {
