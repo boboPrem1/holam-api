@@ -363,6 +363,7 @@ exports.createGeolocationServicePoint = async (req, res) => {
         coordinates: req.body.location.split(" ").map(Number),
       },
       days: req.body.days,
+      ammount: req.body.amount,
       user: userIn._id,
     };
 

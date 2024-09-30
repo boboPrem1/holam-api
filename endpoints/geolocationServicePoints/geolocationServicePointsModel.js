@@ -38,6 +38,10 @@ const geolocationServicePointSchema = mongoose.Schema(
       type: Number,
       default: 0,
     },
+    amount: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,
