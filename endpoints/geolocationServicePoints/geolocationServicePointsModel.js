@@ -6,12 +6,22 @@ const geolocationServicePointSchema = mongoose.Schema(
       type: String,
       ref: "User",
       default: "000000000000000000000000",
-      required: true,
     },
-    transaction: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "GeolocationServiceTransaction",
+    master: {
+      type: String,
+      ref: "Master",
       default: "000000000000000000000000",
+    },
+    agent: {
+      type: String,
+      ref: "Agent",
+      default: "000000000000000000000000",
+    },
+    client: {
+      type: String,
+      ref: "Client",
+      default: "000000000000000000000000",
+      required: true,
     },
     location: {
       type: {
@@ -24,8 +34,9 @@ const geolocationServicePointSchema = mongoose.Schema(
         required: true,
       },
     },
-    description: {
-      type: String,
+    days: {
+      type: Number,
+      default: 0,
     },
   },
   {
@@ -37,15 +48,14 @@ const geolocationServicePointSchema = mongoose.Schema(
 // populate response with user
 geolocationServicePointSchema.pre(/^find/, function (next) {
   this.populate({
-    path: "transaction",
-    select: "amount",
-  });
-  this.populate({
     path: "user",
-    select: "_id username firstname lastname role",
+    select: "_id username firstname lastname role complete_name",
   });
   next();
 });
 
-const GeolocationServicePoint = mongoose.model("GeolocationServicePoint", geolocationServicePointSchema);
+const GeolocationServicePoint = mongoose.model(
+  "GeolocationServicePoint",
+  geolocationServicePointSchema
+);
 module.exports = GeolocationServicePoint;

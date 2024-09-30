@@ -5,7 +5,7 @@
 // // @Route: /api/v1/geolocationServicePoints
 // // @Access: Public
 // exports.getAllGeolocationServicePoints = async (req, res, next) => {
-//   const { limit, page, sort, fields } = req.query;
+//   let { limit, page, sort, fields, _from } = req.query;
 //   const queryObj = CustomUtils.advancedQuery(req.query);
 //   const userIn = await req.userIn();
 //   if (
@@ -18,7 +18,7 @@
 //     const geolocationServicePoints = await GeolocationServicePoint.find(
 //       queryObj
 //     )
-//       .limit(limit * 1)
+//       .limit(limit)
 //       .sort({
 //         createdAt: -1,
 //         ...sort,
@@ -172,9 +172,11 @@
 //   }
 // };
 
-
 const GeolocationServicePoint = require("./geolocationServicePointsModel.js");
 const CustomUtils = require("../../utils/index.js");
+const GeolocationServiceAgent = require("../geolocationServiceAgents/geolocationServiceAgentsModel.js");
+const GeolocationServiceMaster = require("../geolocationServiceMasters/geolocationServiceMastersModel.js");
+const GeolocationServiceClient = require("../geolocationServiceClients/geolocationServicesClientsModel.js");
 
 const isAdminOrSuperAdmin = (user) =>
   user.role.slug === "super-administrateur" || user.role.slug === "admin";
@@ -182,30 +184,103 @@ const isAdminOrSuperAdmin = (user) =>
 // @Get all geolocationServicePoints
 // @Route: /api/v1/geolocationServicePoints
 // @Access: Public
+// exports.getAllGeolocationServicePoints = async (req, res) => {
+//   let { limit = 10, page = 1, sort = {}, fields, _from } = req.query;
+//   limit = parseInt(limit, 10);
+//   let skip = null;
+//   if (_from) limit = null;
+//   const queryObj = CustomUtils.advancedQuery(req.query);
+
+//   try {
+//     const userIn = await req.userIn();
+//     let master = await GeolocationServiceMaster.findOne({
+//       user: userIn._id,
+//     });
+//     let client = await GeolocationServiceClient.findOne({
+//       user: userIn._id,
+//     });
+//     let agent = await GeolocationServiceAgent.findOne({
+//       user: userIn._id,
+//     });
+//     // Restrict query if not admin or super-admin
+
+//     if (!isAdminOrSuperAdmin(userIn)) {
+//       queryObj.user = userIn._id;
+//       if (userIn.role.slug === "master") {
+//         queryObj.master = master ? master._id : null;
+//       } else if (userIn.role.slug === "client") {
+//         queryObj.client = client ? client._id : null;
+//       } else if (userIn.role.slug === "agent") {
+//         queryObj.agent = agent ? agent._id : null;
+//       }
+//     }
+//     console.log(queryObj);
+//     const geolocationServicePoints = await GeolocationServicePoint.find(
+//       queryObj
+//     )
+//       .limit(limit)
+//       .skip(skip)
+//       .sort({ createdAt: -1, ...sort })
+//       .select(fields);
+
+//     res.status(200).json(geolocationServicePoints);
+//   } catch (error) {
+//     res.status(404).json({ message: error.message });
+//   }
+// };
+
 exports.getAllGeolocationServicePoints = async (req, res) => {
-  const { limit = 10, page = 1, sort = {}, fields } = req.query;
+  let { limit = 10, page = 1, sort = {}, fields, _from } = req.query;
+  limit = parseInt(limit, 10);
+  page = parseInt(page, 10);
+
+  // Calculer 'skip' uniquement si la pagination est nécessaire
+  let skip = (page - 1) * limit;
+
+  // Désactiver la limite si '_from' est défini
+  if (_from) {
+    limit = null;
+    skip = null; // Pas besoin de pagination si '_from' est utilisé
+  }
+
   const queryObj = CustomUtils.advancedQuery(req.query);
 
   try {
     const userIn = await req.userIn();
 
-    // Restrict query if not admin or super-admin
+    // Rechercher les rôles correspondants au user
+    let master = await GeolocationServiceMaster.findOne({ user: userIn._id });
+    let client = await GeolocationServiceClient.findOne({ user: userIn._id });
+    let agent = await GeolocationServiceAgent.findOne({ user: userIn._id });
+
+    // Restriction de la requête si l'utilisateur n'est pas admin ou super-admin
     if (!isAdminOrSuperAdmin(userIn)) {
       queryObj.user = userIn._id;
+
+      if (userIn.role.slug === "master") {
+        queryObj.master = master ? master._id : null;
+      } else if (userIn.role.slug === "client") {
+        queryObj.client = client ? client._id : null;
+      } else if (userIn.role.slug === "agent") {
+        queryObj.agent = agent ? agent._id : null;
+      }
     }
 
+    // Debug pour voir le contenu de l'objet de requête
+    console.log(queryObj);
+
+    // Exécuter la requête avec les paramètres paginés
     const geolocationServicePoints = await GeolocationServicePoint.find(
       queryObj
     )
-      .limit(limit * 1)
-      .skip((page - 1) * limit)
-      .sort({ createdAt: -1, ...sort })
-      .select(fields)
-      .lean();
+      .limit(limit) // Limite de résultats
+      .skip(skip) // Décalage (pagination)
+      .sort({ createdAt: -1, ...sort }) // Tri
+      .select(fields); // Champs à sélectionner
 
     res.status(200).json(geolocationServicePoints);
   } catch (error) {
-    res.status(404).json({ message: error.message });
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -217,9 +292,27 @@ exports.getGeolocationServicePointById = async (req, res) => {
     const userIn = await req.userIn();
     const query = { _id: req.params.id };
 
+    let master = await GeolocationServiceMaster.findOne({
+      _id: userIn._id,
+    });
+    let client = await GeolocationServiceClient.findOne({
+      _id: userIn._id,
+    });
+    let agent = await GeolocationServiceAgent.findOne({
+      _id: userIn._id,
+    });
+
     // Add user constraint if not admin or super-admin
+
     if (!isAdminOrSuperAdmin(userIn)) {
       query.user = userIn._id;
+      if (userIn.role.slug === "master") {
+        query.master = master ? master._id : null;
+      } else if (userIn.role.slug === "client") {
+        query.client = client ? client._id : null;
+      } else if (userIn.role.slug === "agent") {
+        query.agent = agent ? agent._id : null;
+      }
     }
 
     const geolocationServicePoint = await GeolocationServicePoint.findOne(
@@ -244,9 +337,30 @@ exports.createGeolocationServicePoint = async (req, res) => {
     const userIn = await req.userIn();
     const slug = CustomUtils.slugify(req.body.name);
 
+    let agent = null;
+    let master = null;
+
+    if (userIn.role.slug === "agent") {
+      agent = await GeolocationServiceAgent.findOne({
+        user: userIn._id,
+      });
+      master = agent.master._id;
+    }
+    if (userIn.role.slug === "master") {
+      master = await GeolocationServiceMaster.findOne({
+        user: userIn._id,
+      });
+    }
+
     const newGeolocationServicePoint = {
-      ...req.body,
-      slug,
+      agent: agent ? (agent ? agent._id : null) : null,
+      master: master ? master._id : null,
+      client: req.body.client,
+      location: {
+        type: "Point",
+        coordinates: req.body.location.split(" ").map(Number),
+      },
+      days: req.body.days,
       user: userIn._id,
     };
 
@@ -266,9 +380,24 @@ exports.updateGeolocationServicePoint = async (req, res) => {
   try {
     const userIn = await req.userIn();
     const query = { _id: req.params.id };
-
+    let master = await GeolocationServiceMaster.findOne({
+      _id: userIn._id,
+    });
+    let client = await GeolocationServiceClient.findOne({
+      _id: userIn._id,
+    });
+    let agent = await GeolocationServiceAgent.findOne({
+      _id: userIn._id,
+    });
     if (!isAdminOrSuperAdmin(userIn)) {
       query.user = userIn._id;
+      if (userIn.role.slug === "master") {
+        query.master = master ? master._id : null;
+      } else if (userIn.role.slug === "client") {
+        query.client = client ? client._id : null;
+      } else if (userIn.role.slug === "agent") {
+        query.agent = agent ? agent._id : null;
+      }
     }
 
     const geolocationServicePoint = await GeolocationServicePoint.findOne(
@@ -298,9 +427,24 @@ exports.deleteGeolocationServicePoint = async (req, res) => {
   try {
     const userIn = await req.userIn();
     const query = { _id: req.params.id };
-
+    let master = await GeolocationServiceMaster.findOne({
+      _id: userIn._id,
+    });
+    let client = await GeolocationServiceClient.findOne({
+      _id: userIn._id,
+    });
+    let agent = await GeolocationServiceAgent.findOne({
+      _id: userIn._id,
+    });
     if (!isAdminOrSuperAdmin(userIn)) {
       query.user = userIn._id;
+      if (userIn.role.slug === "master") {
+        query.master = master ? master._id : null;
+      } else if (userIn.role.slug === "client") {
+        query.client = client ? client._id : null;
+      } else if (userIn.role.slug === "agent") {
+        query.agent = agent ? agent._id : null;
+      }
     }
 
     const geolocationServicePoint = await GeolocationServicePoint.findOne(

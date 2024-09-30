@@ -6,12 +6,14 @@ const CustomUtils = require("../../utils/index.js");
 // @Access: Public
 exports.getAllActivitySubCategories = async (req, res, next) => {
   try {
-    const { limit = 10, page = 1, sort, fields } = req.query;
+    let { limit, page, sort, fields, _from } = req.query;
+    limit = parseInt(limit, 10);
+    let skip = null;
+    if (_from) limit = null;
     const queryObj = CustomUtils.advancedQuery(req.query);
-    const userIn = await req.userIn();
-
+    // const userIn = await req.userIn();
     const activitySubCategories = await ActivitySubCategory.find(queryObj)
-      .limit(limit * 1)
+      .limit(limit)
       .sort({
         createdAt: -1,
         ...sort,
@@ -33,13 +35,6 @@ exports.getActivitySubCategoryById = async (req, res) => {
 
     const userIn = await req.userIn();
     const query = { _id: req.params.id };
-
-    if (
-      userIn.role.slug !== "super-administrateur" &&
-      userIn.role.slug !== "admin"
-    ) {
-      query.user = userIn._id;
-    }
 
     const activitySubCategory = await ActivitySubCategory.findOne(query);
 

@@ -5,7 +5,7 @@
 // // @route Get /api/v1/geolocationServiceClients
 // // @access Public
 // exports.getAllGeolocationServiceClients = async (req, res) => {
-//   const { limit, page, sort, fields } = req.query;
+//   let { limit, page, sort, fields, _from } = req.query;
 //   const queryObj = CustomUtils.advancedQuery(req.query);
 //   const userIn = await req.userIn();
 //   if (
@@ -18,7 +18,7 @@
 //     const geolocationServiceClients = await GeolocationServiceClient.find(
 //       queryObj
 //     )
-//       .limit(limit * 1)
+//       .limit(limit)
 //       .sort({
 //         createdAt: -1,
 //         ...sort,
@@ -163,6 +163,10 @@
 
 const GeolocationServiceClient = require("./geolocationServicesClientsModel.js");
 const CustomUtils = require("../../utils/index.js");
+const GeolocationServiceMaster = require("../geolocationServiceMasters/geolocationServiceMastersModel.js");
+const GeolocationServiceAgent = require("../geolocationServiceAgents/geolocationServiceAgentsModel.js");
+const User = require("../users/userModel.js");
+const UserRole = require("../userRoles/userRoleModel.js");
 
 // Middleware pour vérifier les rôles
 const checkRole = (userIn) => {
@@ -175,20 +179,50 @@ const checkRole = (userIn) => {
 // @route Get /api/v1/geolocationServiceClients
 // @access Public
 exports.getAllGeolocationServiceClients = async (req, res) => {
-  const { limit = 10, page = 1, sort, fields } = req.query;
+  let { limit = 10, page = 1, sort, fields, _from } = req.query;
+  limit = parseInt(limit, 10);
+  let skip = null;
+  if (_from) limit = null;
   const queryObj = CustomUtils.advancedQuery(req.query);
 
   try {
     const userIn = await req.userIn();
-    if (!checkRole(userIn)) {
-      queryObj.user = userIn._id; // Restrict to the current user's data
+    const master = await GeolocationServiceMaster.findOne({
+      user: userIn._id,
+    });
+    const agent = await GeolocationServiceAgent.findOne({
+      user: userIn._id,
+    });
+    // console.log(userIn.role.slug);
+    // const agentMaster = await GeolocationServiceMaster.findOne({
+    //   master: agent.master,
+    // });
+
+    switch (userIn.role.slug) {
+      case "super-administrateur":
+        break;
+
+      case "admin":
+        break;
+
+      case "master":
+        queryObj.master = master._id;
+        break;
+
+      case "agent":
+        queryObj.master = agent.master._id;
+        break;
+
+      default:
+        queryObj.user = userIn._id;
+        break;
     }
 
     const geolocationServiceClients = await GeolocationServiceClient.find(
       queryObj
     )
-      .limit(limit * 1)
-      .skip((page - 1) * limit)
+      .limit(limit)
+      .skip(skip)
       .sort(sort || { createdAt: -1 })
       .select(fields);
 
@@ -204,11 +238,37 @@ exports.getAllGeolocationServiceClients = async (req, res) => {
 exports.getGeolocationServiceClientById = async (req, res) => {
   try {
     const userIn = await req.userIn();
+    const master = await GeolocationServiceMaster.findOne({
+      user: userIn._id,
+    });
+    const agent = await GeolocationServiceAgent.findOne({
+      user: userIn._id,
+    });
     const query = { _id: req.params.id };
 
-    if (!checkRole(userIn)) {
-      query.user = userIn._id; // Restrict to the current user's data
+    switch (userIn.role.slug) {
+      case "super-administrateur":
+        break;
+
+      case "admin":
+        break;
+
+      case "master":
+        query.master = master._id;
+        break;
+
+      case "agent":
+        query.master = agent.master._id;
+        break;
+
+      default:
+        query.user = userIn._id;
+        break;
     }
+
+    // if (!checkRole(userIn)) {
+    //   query.user = userIn._id; // Restrict to the current user's data
+    // }
 
     const geolocationServiceClient = await GeolocationServiceClient.findOne(
       query
@@ -230,15 +290,59 @@ exports.getGeolocationServiceClientById = async (req, res) => {
 exports.createGeolocationServiceClient = async (req, res) => {
   try {
     const userIn = await req.userIn();
+    let master = await GeolocationServiceMaster.findOne({
+      user: userIn._id,
+    });
+    let clientRole = await UserRole.findOne({
+      slug: "client",
+    });
+    // const agent = await GeolocationServiceAgent.findOne({
+    //   user: userIn._id,
+    // });
+    // const agentMaster = await GeolocationServiceMaster.findOne({
+    //   master: agent.master._id,
+    // });
     const CustomBody = {
       ...req.body,
-      user: userIn._id,
-      slug: CustomUtils.slugify(req.body.name),
+      // user: userIn._id,
+      slug: CustomUtils.slugify(req.body.firstname + " " + req.body.lastname),
     };
 
-    const newGeolocationServiceClient = await GeolocationServiceClient.create(
-      CustomBody
-    );
+    if (
+      userIn.role.slug === "super-administrateur" ||
+      userIn.role.slug === "super-administrateur"
+    ) {
+      master = CustomBody.master;
+    }
+
+    // Create User
+    const phone = {
+      indicatif: CustomBody.phone.indicatif,
+      number: CustomBody.phone.number,
+    };
+    const lastname = CustomBody.lastname;
+    const firstname = CustomBody.firstname;
+    const description = CustomBody.description;
+    const role = clientRole._id;
+
+    const newUser = await User.create({
+      role,
+      phone,
+      firstname,
+      lastname,
+      complete_name: `${firstname} ${lastname}`,
+      description,
+      slug: CustomUtils.slugify(`${firstname} ${lastname}`),
+    });
+
+    const newGeolocationServiceClient = await GeolocationServiceClient.create({
+      user: newUser._id,
+      master: master._id,
+    });
+
+    // const newGeolocationServiceClient = await GeolocationServiceClient.create(
+    //   CustomBody
+    // );
     res.status(201).json(newGeolocationServiceClient);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -251,10 +355,36 @@ exports.createGeolocationServiceClient = async (req, res) => {
 exports.updateGeolocationServiceClientById = async (req, res) => {
   try {
     const userIn = await req.userIn();
+    const master = await GeolocationServiceMaster.findOne({
+      user: userIn._id,
+    });
+    const agent = await GeolocationServiceAgent.findOne({
+      user: userIn._id,
+    });
     const query = { _id: req.params.id };
 
-    if (!checkRole(userIn)) {
-      query.user = userIn._id; // Restrict to the current user's data
+    // if (!checkRole(userIn)) {
+    //   query.user = userIn._id; // Restrict to the current user's data
+    // }
+
+    switch (userIn.role.slug) {
+      case "super-administrateur":
+        break;
+
+      case "admin":
+        break;
+
+      case "master":
+        query.master = master._id;
+        break;
+
+      case "agent":
+        query.master = agent.master._id;
+        break;
+
+      default:
+        query.user = userIn._id;
+        break;
     }
 
     const geolocationServiceClient = await GeolocationServiceClient.findOne(
@@ -283,10 +413,36 @@ exports.updateGeolocationServiceClientById = async (req, res) => {
 exports.deleteGeolocationServiceClientById = async (req, res) => {
   try {
     const userIn = await req.userIn();
+    const master = await GeolocationServiceMaster.findOne({
+      user: userIn._id,
+    });
+    const agent = await GeolocationServiceAgent.findOne({
+      user: userIn._id,
+    });
     const query = { _id: req.params.id };
 
-    if (!checkRole(userIn)) {
-      query.user = userIn._id; // Restrict to the current user's data
+    // if (!checkRole(userIn)) {
+    //   query.user = userIn._id; // Restrict to the current user's data
+    // }
+
+    switch (userIn.role.slug) {
+      case "super-administrateur":
+        break;
+
+      case "admin":
+        break;
+
+      case "master":
+        query.master = master._id;
+        break;
+
+      case "agent":
+        query.master = agent.master._id;
+        break;
+
+      default:
+        query.user = userIn._id;
+        break;
     }
 
     const geolocationServiceClient = await GeolocationServiceClient.findOne(

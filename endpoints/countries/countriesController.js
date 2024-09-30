@@ -5,7 +5,7 @@
 // // @Route: /api/v1/countries
 // // @Access: Public
 // exports.getAllCountries = async (req, res, next) => {
-//   const { limit, page, sort, fields } = req.query;
+//   let { limit, page, sort, fields, _from } = req.query;
 //   const queryObj = CustomUtils.advancedQuery(req.query);
 //   const userIn = await req.userIn();
 //   if (
@@ -16,7 +16,7 @@
 //   }
 //   try {
 //     const countries = await Country.find(queryObj)
-//       .limit(limit * 1)
+//       .limit(limit)
 //       .sort({
 //         createdAt: -1,
 //         ...sort,
@@ -158,7 +158,6 @@
 //   }
 // };
 
-
 const Country = require("./countriesModel.js");
 const CustomUtils = require("../../utils/index.js");
 
@@ -167,7 +166,10 @@ const CustomUtils = require("../../utils/index.js");
 // @Access: Public
 exports.getAllCountries = async (req, res, next) => {
   try {
-    const { limit = 10, page = 1, sort, fields } = req.query;
+    let { limit = 10, page = 1, sort, fields, _from } = req.query;
+    limit = parseInt(limit, 10);
+    let skip = null;
+    if (_from) limit = null;
     const queryObj = CustomUtils.advancedQuery(req.query);
     const userIn = await req.userIn();
 

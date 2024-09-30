@@ -131,11 +131,11 @@
 //   }
 
 //   static formatDateLong(date) {
-//   const options = { 
-//     day: 'numeric', 
-//     month: 'long', 
-//     year: 'numeric', 
-//     hour: '2-digit', 
+//   const options = {
+//     day: 'numeric',
+//     month: 'long',
+//     year: 'numeric',
+//     hour: '2-digit',
 //     minute: '2-digit',
 //     hour12: false // Pour le format 24h
 //   };
@@ -146,8 +146,19 @@
 
 // module.exports = CustomUtils;
 
-
+const { SNSClient, PublishCommand } = require("@aws-sdk/client-sns");
+require("dotenv").config();
 const jwt = require("jsonwebtoken");
+
+const APP_NAME = process.env.APP_NAME;
+
+const snsClient = new SNSClient({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
+});
 
 class CustomUtils {
   // Constantes utilisées dans l'application
@@ -251,6 +262,7 @@ class CustomUtils {
       "_end",
       "_start",
       "view_user",
+      "_from",
     ];
     excludedFields.forEach((field) => delete queryObj[field]);
 
@@ -297,6 +309,52 @@ class CustomUtils {
       .format(date)
       .replace(":", "h");
   };
+  static generatePassword(length = 12) {
+    const lowercase = "abcdefghijklmnopqrstuvwxyz";
+    const uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const numbers = "0123456789";
+    const specialChars = "!@#$%^&*()_+~`|}{[]:;?><,./-=";
+
+    const allChars = lowercase + uppercase + numbers + specialChars;
+    let password = "";
+
+    // Mélanger les différents types de caractères pour garantir qu'au moins un de chaque type est présent
+    password += lowercase[Math.floor(Math.random() * lowercase.length)];
+    password += uppercase[Math.floor(Math.random() * uppercase.length)];
+    password += numbers[Math.floor(Math.random() * numbers.length)];
+    password += specialChars[Math.floor(Math.random() * specialChars.length)];
+
+    // Remplir le reste du mot de passe
+    for (let i = password.length; i < length; i++) {
+      password += allChars[Math.floor(Math.random() * allChars.length)];
+    }
+
+    // Mélanger le mot de passe pour éviter que les premiers caractères soient toujours les mêmes
+    return password
+      .split("")
+      .sort(() => 0.5 - Math.random())
+      .join("");
+  }
+  static async sendSMS(message, indicatif, number) {
+
+    const params = {
+      Message: message,
+      PhoneNumber: `${indicatif}${number}`,
+      MessageAttributes: {
+        "AWS.SNS.SMS.SenderID": {
+          DataType: "String",
+          StringValue: APP_NAME,
+        },
+      },
+    };
+
+    try {
+      const result = await snsClient.send(new PublishCommand(params));
+      console.log(result);
+    } catch (error) {
+      throw new Error("Failed to send OTP");
+    }
+  }
 }
 
 module.exports = CustomUtils;

@@ -6,7 +6,7 @@
 // // @access Public
 
 // exports.getAllUserRoles = async (req, res) => {
-//   const { limit, page, sort, fields } = req.query;
+//   let { limit, page, sort, fields, _from } = req.query;
 //   const queryObj = CustomUtils.advancedQuery(req.query);
 //   const userIn = await req.userIn();
 //   if (
@@ -17,7 +17,7 @@
 //   }
 //   try {
 //     const userRoles = await UserRole.find(queryObj)
-//       .limit(limit * 1)
+//       .limit(limit)
 //       .sort({
 //         createdAt: -1,
 //         ...sort,
@@ -160,7 +160,6 @@
 //   }
 // };
 
-
 const UserRole = require("./userRoleModel.js");
 const CustomUtils = require("../../utils/index.js");
 
@@ -180,6 +179,9 @@ exports.getAllUserRoles = async (req, res) => {
       sort = { createdAt: -1 },
       fields,
     } = req.query;
+    limit = parseInt(limit, 10);
+    let skip = null;
+    if (_from) limit = null;
     const queryObj = CustomUtils.advancedQuery(req.query);
     const userIn = await req.userIn();
 
@@ -190,7 +192,7 @@ exports.getAllUserRoles = async (req, res) => {
 
     const userRoles = await UserRole.find(queryObj)
       .limit(Number(limit))
-      .skip((page - 1) * limit)
+      .skip(skip)
       .sort(sort)
       .select(fields);
 
@@ -303,9 +305,7 @@ exports.deleteUserRole = async (req, res) => {
     }
 
     await UserRole.findByIdAndDelete(req.params.id);
-    res
-      .status(200)
-      .json({message: "UserRole deleted successfully" });
+    res.status(200).json({ message: "UserRole deleted successfully" });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

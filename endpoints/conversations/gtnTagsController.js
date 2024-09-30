@@ -5,7 +5,7 @@
 // // @Route: /api/v1/tags
 // // @Access: Public
 // exports.getAllGtnTags = async (req, res, next) => {
-//   const { limit, page, sort, fields } = req.query;
+//   let { limit, page, sort, fields, _from } = req.query;
 //   const queryObj = CustomUtils.advancedQuery(req.query);
 //   const userIn = await req.userIn();
 //   if (
@@ -16,7 +16,7 @@
 //   }
 //   try {
 //     const tags = await GtnTag.find(queryObj)
-//       .limit(limit * 1)
+//       .limit(limit)
 //       .sort({
 //         createdAt: -1,
 //         ...sort,
@@ -163,7 +163,10 @@ const CustomUtils = require("../../utils/index.js");
 // @Route: /api/v1/tags
 // @Access: Public
 exports.getAllGtnTags = async (req, res, next) => {
-  const { limit = 10, page = 1, sort, fields } = req.query;
+  let { limit = 10, page = 1, sort, fields, _from } = req.query;
+  limit = parseInt(limit, 10);
+  let skip = null;
+  if (_from) limit = null;
   const queryObj = CustomUtils.advancedQuery(req.query);
 
   try {
@@ -178,8 +181,8 @@ exports.getAllGtnTags = async (req, res, next) => {
     }
 
     const tags = await GtnTag.find(queryObj)
-      .limit(limit * 1)
-      .skip((page - 1) * limit) // Pagination
+      .limit(limit)
+      .skip(skip) // Pagination
       .sort({ createdAt: -1, ...sort })
       .select(fields);
 

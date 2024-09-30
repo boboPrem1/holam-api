@@ -5,7 +5,7 @@
 // // @Route: /api/v1/monitorings
 // // @Access: Public
 // exports.getAllMonitorings = async (req, res, next) => {
-//   const { limit, page, sort, fields } = req.query;
+//   let { limit, page, sort, fields, _from } = req.query;
 //   const queryObj = CustomUtils.advancedQuery(req.query);
 //   const userIn = await req.userIn();
 //   if (
@@ -16,7 +16,7 @@
 //   }
 //   try {
 //     const monitorings = await Monitoring.find(queryObj)
-//       .limit(limit * 1)
+//       .limit(limit)
 //       .sort({
 //         createdAt: -1,
 //         ...sort,
@@ -162,7 +162,6 @@
 //   }
 // };
 
-
 const Monitoring = require("./monitoringsModel.js");
 const CustomUtils = require("../../utils/index.js");
 
@@ -175,7 +174,10 @@ const isAdminOrSuperAdmin = (user) =>
 // @Access: Public
 exports.getAllMonitorings = async (req, res, next) => {
   try {
-    const { limit, page, sort, fields } = req.query;
+    let { limit, page, sort, fields, _from } = req.query;
+    limit = parseInt(limit, 10);
+    let skip = null;
+    if (_from) limit = null;
     const queryObj = CustomUtils.advancedQuery(req.query);
     const userIn = await req.userIn();
 

@@ -20,10 +20,13 @@ const geolocationServiceSchema = mongoose.Schema(
 geolocationServiceSchema.pre(/^find/, function (next) {
   this.populate({
     path: "user",
-    select: "_id username firstname lastname role",
+    select: "_id username firstname lastname role complete_name",
   });
   next();
 });
 
-const GeolocationService = mongoose.model("GeolocationService", geolocationServiceSchema);
+const GeolocationService = mongoose.model(
+  "GeolocationService",
+  geolocationServiceSchema
+);
 module.exports = GeolocationService;

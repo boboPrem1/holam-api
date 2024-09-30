@@ -5,7 +5,7 @@
 // // @Route: /api/v1/chats
 // // @Access: Public
 // exports.getAllChats = async (req, res, next) => {
-//   const { limit, page, sort, fields } = req.query;
+//   let { limit, page, sort, fields, _from } = req.query;
 //   const queryObj = CustomUtils.advancedQuery(req.query);
 //   const userIn = await req.userIn();
 //   if (
@@ -16,7 +16,7 @@
 //   }
 //   try {
 //     const chats = await Chat.find(queryObj)
-//       .limit(limit * 1)
+//       .limit(limit)
 //       .sort({
 //         createdAt: -1,
 //         ...sort,
@@ -163,7 +163,16 @@ const CustomUtils = require("../../utils/index.js");
 // @Access: Public
 exports.getAllChats = async (req, res) => {
   try {
-    const { limit = 10, page = 1, sort = "-createdAt", fields } = req.query;
+    let {
+      limit = 10,
+      page = 1,
+      sort = "-createdAt",
+      fields,
+      _from,
+    } = req.query;
+    limit = parseInt(limit, 10);
+    let skip = null;
+    if (_from) limit = null;
     const queryObj = CustomUtils.advancedQuery(req.query);
     const userIn = await req.userIn();
 
@@ -177,7 +186,7 @@ exports.getAllChats = async (req, res) => {
 
     const chats = await Chat.find(queryObj)
       .limit(parseInt(limit))
-      .skip((page - 1) * limit)
+      .skip(skip)
       .sort(sort)
       .select(fields ? fields.split(",").join(" ") : "");
 

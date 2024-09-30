@@ -18,7 +18,7 @@
 // // @Route: /api/v1/transactions
 // // @Access: Public
 // exports.getAllTransactions = async (req, res, next) => {
-//   const { limit, page, sort, fields } = req.query;
+//   let { limit, page, sort, fields, _from } = req.query;
 //   const queryObj = CustomUtils.advancedQuery(req.query);
 //   const userIn = await req.userIn();
 //   if (
@@ -29,7 +29,7 @@
 //   }
 //   try {
 //     const transactions = await Transaction.find(queryObj)
-//       .limit(limit * 1)
+//       .limit(limit)
 //       .sort({
 //         createdAt: -1,
 //         ...sort,
@@ -291,7 +291,7 @@
 // };
 
 // exports.paymentCallback = async (req, res, next) => {
-//   const { limit, page, sort, fields } = req.query;
+//   let { limit, page, sort, fields, _from } = req.query;
 //   const queryObj = CustomUtils.advancedQuery(req.query);
 //   try {
 //     console.log({ ...queryObj });
@@ -300,7 +300,6 @@
 //     res.status(404).json({ message: error.message });
 //   }
 // };
-
 
 const Transaction = require("./transactionsModel.js");
 const CustomUtils = require("../../utils/index.js");
@@ -322,7 +321,10 @@ FedaPay.setEnvironment("live");
 // @Access: Public
 exports.getAllTransactions = async (req, res) => {
   try {
-    const { limit, page, sort, fields } = req.query;
+    let { limit, page, sort, fields, _from } = req.query;
+    limit = parseInt(limit, 10);
+    let skip = null;
+    if (_from) limit = null;
     const queryObj = CustomUtils.advancedQuery(req.query);
     const userIn = await req.userIn();
 

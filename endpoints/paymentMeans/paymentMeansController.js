@@ -5,11 +5,11 @@
 // // @Route: /api/v1/paymentMeans
 // // @Access: Public
 // exports.getAllPaymentMeans = async (req, res, next) => {
-//   const { limit, page, sort, fields } = req.query;
+//   let { limit, page, sort, fields, _from } = req.query;
 //   const queryObj = CustomUtils.advancedQuery(req.query);
 //   try {
 //     const paymentMeans = await PaymentMean.find(queryObj)
-//       .limit(limit * 1)
+//       .limit(limit)
 //       .sort({
 //         createdAt: -1,
 //         ...sort,
@@ -46,7 +46,7 @@
 //   const slug = CustomUtils.slugify(CustomBody.name);
 //   try {
 //     CustomBody.slug = slug;
-//     // create new paymentMean     
+//     // create new paymentMean
 //     const paymentMean = await PaymentMean.create(CustomBody);
 //     res.status(201).json(paymentMean);
 //   } catch (error) {
@@ -101,11 +101,14 @@ exports.getAllPaymentMeans = async (req, res) => {
       sort = { createdAt: -1 },
       fields,
     } = req.query;
+    limit = parseInt(limit, 10);
+    let skip = null;
+    if (_from) limit = null;
     const queryObj = CustomUtils.advancedQuery(req.query);
 
     const paymentMeans = await PaymentMean.find(queryObj)
       .limit(parseInt(limit))
-      .skip((page - 1) * limit)
+      .skip(skip)
       .sort(sort)
       .select(fields ? fields.split(",").join(" ") : "")
       .lean(); // Optimisation pour renvoyer des objets JS simples
@@ -189,9 +192,7 @@ exports.deletePaymentMean = async (req, res) => {
     }
 
     await PaymentMean.findByIdAndDelete(req.params.id);
-    res
-      .status(200)
-      .json({ message: "Payment method deleted successfully!" });
+    res.status(200).json({ message: "Payment method deleted successfully!" });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

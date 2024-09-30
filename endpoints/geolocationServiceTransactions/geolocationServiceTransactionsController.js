@@ -5,7 +5,7 @@
 // // @Route: /api/v1/geolocationServiceTransactions
 // // @Access: Public
 // exports.getAllGeolocationServiceTransactions = async (req, res, next) => {
-//   const { limit, page, sort, fields } = req.query;
+//   let { limit, page, sort, fields, _from } = req.query;
 //   const queryObj = CustomUtils.advancedQuery(req.query);
 //   const userIn = await req.userIn();
 //   if (
@@ -17,7 +17,7 @@
 //   try {
 //     const geolocationServiceTransactions =
 //       await GeolocationServiceTransaction.find(queryObj)
-//         .limit(limit * 1)
+//         .limit(limit)
 //         .sort({
 //           createdAt: -1,
 //           ...sort,
@@ -187,7 +187,10 @@ const CustomUtils = require("../../utils/index.js");
 // @Access: Public
 exports.getAllGeolocationServiceTransactions = async (req, res, next) => {
   try {
-    const { limit = 10, page = 1, sort, fields } = req.query;
+    let { limit = 10, page = 1, sort, fields, _from } = req.query;
+    limit = parseInt(limit, 10);
+    let skip = null;
+    if (_from) limit = null;
     const queryObj = CustomUtils.advancedQuery(req.query);
 
     const userIn = await req.userIn();
@@ -201,7 +204,7 @@ exports.getAllGeolocationServiceTransactions = async (req, res, next) => {
     const geolocationServiceTransactions =
       await GeolocationServiceTransaction.find(queryObj)
         .limit(limit)
-        .skip((page - 1) * limit)
+        .skip(skip)
         .sort({ createdAt: -1, ...sort })
         .select(fields);
 
@@ -319,11 +322,9 @@ exports.deleteGeolocationServiceTransaction = async (req, res) => {
     }
 
     await GeolocationServiceTransaction.findByIdAndDelete(req.params.id);
-    res
-      .status(200)
-      .json({
-        message: "geolocationServiceTransaction deleted successfully !",
-      });
+    res.status(200).json({
+      message: "geolocationServiceTransaction deleted successfully !",
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

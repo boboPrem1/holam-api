@@ -5,7 +5,7 @@
 // // @Route: /api/v1/files
 // // @Access: Public
 // exports.getAllFiles = async (req, res, next) => {
-//   const { limit, page, sort, fields } = req.query;
+//   let { limit, page, sort, fields, _from } = req.query;
 //   const queryObj = CustomUtils.advancedQuery(req.query);
 //   const userIn = await req.userIn();
 //   if (
@@ -16,7 +16,7 @@
 //   }
 //   try {
 //     const files = await File.find(queryObj)
-//       .limit(limit * 1)
+//       .limit(limit)
 //       .sort({
 //         createdAt: -1,
 //         ...sort,
@@ -164,7 +164,10 @@ const CustomUtils = require("../../utils/index.js");
 // @Route: /api/v1/files
 // @Access: Public
 exports.getAllFiles = async (req, res, next) => {
-  const { limit = 10, page = 1, sort, fields } = req.query;
+  let { limit = 10, page = 1, sort, fields, _from } = req.query;
+  limit = parseInt(limit, 10);
+  let skip = null;
+  if (_from) limit = null;
   const queryObj = CustomUtils.advancedQuery(req.query);
   const userIn = await req.userIn();
 
@@ -178,8 +181,8 @@ exports.getAllFiles = async (req, res, next) => {
 
   try {
     const files = await File.find(queryObj)
-      .limit(limit * 1)
-      .skip((page - 1) * limit)
+      .limit(limit)
+      .skip(skip)
       .sort({
         createdAt: -1,
         ...sort,

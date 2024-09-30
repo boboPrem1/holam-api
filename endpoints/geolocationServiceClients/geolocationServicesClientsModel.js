@@ -7,18 +7,6 @@ const geolocationServiceClientSchema = mongoose.Schema(
       default: "000000000000000000000000",
       ref: "User",
     },
-    firstname: {
-      type: String,
-      default: "",
-    },
-    lastname: {
-      type: String,
-      default: "",
-    },
-    description: {
-      type: String,
-      default: "",
-    },
     master: {
       type: mongoose.Schema.Types.ObjectId,
       default: "000000000000000000000000",
@@ -35,7 +23,7 @@ const geolocationServiceClientSchema = mongoose.Schema(
 geolocationServiceClientSchema.pre(/^find/, function (next) {
   this.populate({
     path: "user",
-    select: "_id username firstname lastname role",
+    select: "_id username firstname lastname role complete_name",
   });
   this.populate({
     path: "master",

@@ -5,17 +5,17 @@ const CustomUtils = require("../../utils/index.js");
 // @Route: /api/v1/activityCategories
 // @Access: Public
 exports.getAllActivityCategories = async (req, res, next) => {
-  const { limit, page, sort, fields } = req.query;
+  let { limit, page, sort = "-createdAt", fields, _from } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
   // const userIn = await req.userIn();
   // queryObj.user = userIn._id;
   try {
+    limit = parseInt(limit, 10);
+    let skip = null;
+    if (_from) limit = null;
     const activityCategories = await ActivityCategory.find(queryObj)
-      .limit(limit * 1)
-      .sort({
-        createdAt: -1,
-        ...sort,
-      })
+      .limit(limit)
+      .sort(sort)
       .select(fields);
     res.status(200).json(activityCategories);
   } catch (error) {

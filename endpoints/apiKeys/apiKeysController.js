@@ -6,7 +6,7 @@
 // // @Access: Public
 // exports.getAllApiKeys = async (req, res, next) => {
 //   try {
-//     const { limit = 10, page = 1, sort = "-createdAt", fields } = req.query;
+//     let { limit = 10, page = 1, sort = "-createdAt", fields, _from } = req.query;
 //     const queryObj = CustomUtils.advancedQuery(req.query);
 //     const userIn = await req.userIn();
 
@@ -18,8 +18,8 @@
 //     }
 
 //     const apiKeys = await ApiKey.find(queryObj)
-//       .limit(parseInt(limit, 10))
-//       .skip((page - 1) * limit)
+//       .limit(limit)
+//       .skip(skip)
 //       .sort(sort)
 //       .select(fields ? fields.split(",").join(" ") : "");
 
@@ -166,7 +166,16 @@ const CustomUtils = require("../../utils/index.js");
 // @Access: Public
 exports.getAllApiKeys = async (req, res) => {
   try {
-    const { limit = 10, page = 1, sort = "-createdAt", fields } = req.query;
+    let {
+      limit = 10,
+      page = 1,
+      sort = "-createdAt",
+      fields,
+      _from,
+    } = req.query;
+    limit = parseInt(limit, 10);
+    let skip = null;
+    if (_from) limit = null;
     const queryObj = CustomUtils.advancedQuery(req.query);
     const userIn = await req.userIn();
 
@@ -175,8 +184,8 @@ exports.getAllApiKeys = async (req, res) => {
     }
 
     const apiKeys = await ApiKey.find(queryObj)
-      .limit(parseInt(limit, 10))
-      .skip((page - 1) * limit)
+      .limit(limit)
+      .skip(skip)
       .sort(sort)
       .select(fields ? fields.split(",").join(" ") : "");
 

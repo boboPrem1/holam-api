@@ -5,7 +5,7 @@
 // // @route Get /api/v1/userTypes
 // // @access Public
 // exports.getAllUserTypes = async (req, res) => {
-//   const { limit, page, sort, fields } = req.query;
+//   let { limit, page, sort, fields, _from } = req.query;
 //   const queryObj = CustomUtils.advancedQuery(req.query);
 //   const userIn = await req.userIn();
 //   if (
@@ -16,7 +16,7 @@
 //   }
 //   try {
 //     const userTypes = await UserType.find(queryObj)
-//       .limit(limit * 1)
+//       .limit(limit)
 //       .sort({
 //         createdAt: -1,
 //         ...sort,
@@ -123,7 +123,6 @@
 //   }
 // };
 
-
 const UserType = require("./userTypeModel");
 const CustomUtils = require("../../utils/index.js");
 
@@ -132,8 +131,17 @@ const CustomUtils = require("../../utils/index.js");
 // @access Public
 exports.getAllUserTypes = async (req, res) => {
   try {
-    const { limit = 10, page = 1, sort = "-createdAt", fields } = req.query; // Default pagination
+    let {
+      limit = 10,
+      page = 1,
+      sort = "-createdAt",
+      fields,
+      _from,
+    } = req.query; // Default pagination
     const queryObj = CustomUtils.advancedQuery(req.query);
+    limit = parseInt(limit, 10);
+    let skip = null;
+    if (_from) limit = null;
     const userIn = await req.userIn();
 
     // Restreindre la recherche aux utilisateurs non admin
@@ -146,7 +154,7 @@ exports.getAllUserTypes = async (req, res) => {
 
     const userTypes = await UserType.find(queryObj)
       .limit(Number(limit))
-      .skip((page - 1) * limit)
+      .skip(skip)
       .sort(sort)
       .select(fields ? fields.split(",").join(" ") : "");
 

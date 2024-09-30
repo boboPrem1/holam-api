@@ -26,7 +26,7 @@ const commentSchema = mongoose.Schema(
 commentSchema.pre(/^find/, function (next) {
   this.populate({
     path: "user",
-    select: "_id username firstname lastname role",
+    select: "_id username firstname lastname role complete_name",
   });
   this.populate({
     path: "video",

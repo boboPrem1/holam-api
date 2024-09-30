@@ -6,9 +6,19 @@ const CustomUtils = require("../../utils/index.js");
 // @Access: Public
 exports.getAllActivities = async (req, res) => {
   try {
-    const { limit = 10, page = 1, sort = "-createdAt", fields } = req.query;
+    let {
+      limit = 10,
+      page = 1,
+      sort = "-createdAt",
+      fields,
+      _from,
+    } = req.query;
+    limit = parseInt(limit, 10);
+    let skip = null;
+    if (_from) limit = null;
     const queryObj = CustomUtils.advancedQuery(req.query);
     const userIn = await req.userIn();
+
 
     if (
       userIn.role.slug !== "super-administrateur" &&
@@ -17,9 +27,11 @@ exports.getAllActivities = async (req, res) => {
       queryObj.user = userIn._id;
     }
 
-    const activities = await Activity.find(queryObj)
-      .limit(parseInt(limit, 10))
-      .skip((page - 1) * limit)
+    let activities = null;
+
+    activities = await Activity.find(queryObj)
+      .limit(limit)
+      .skip(skip)
       .sort(sort)
       .select(fields ? fields.split(",").join(" ") : "");
 

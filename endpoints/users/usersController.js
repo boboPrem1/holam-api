@@ -50,7 +50,7 @@
 // // @route GET /api/v1/users
 // // @access Public
 // exports.getAllUsers = async (req, res) => {
-//   const { limit, page, sort, fields } = req.query;
+//   let { limit, page, sort, fields, _from } = req.query;
 //   const queryObj = CustomUtils.advancedQuery(req.query);
 
 //   const userIn = await req.userIn();
@@ -75,7 +75,7 @@
 //     // }
 //     // console.log(roleId);
 //     const users = await User.find(queryObj)
-//       .limit(limit * 1)
+//       .limit(limit)
 //       .sort({ createdAt: -1, ...sort })
 //       .select(fields);
 //     res.status(200).json(users);
@@ -256,7 +256,6 @@
 //   }
 // };
 
-
 const CustomUtils = require("../../utils/index.js");
 const User = require("./userModel");
 const UserRole = require("../userRoles/userRoleModel");
@@ -310,7 +309,10 @@ exports.viewUser = async (req, res) => {
 // @route GET /api/v1/users
 // @access Public
 exports.getAllUsers = async (req, res) => {
-  const { limit = 10, page = 1, sort, fields } = req.query;
+  let { limit = 10, page = 1, sort, fields, _from } = req.query;
+  limit = parseInt(limit, 10);
+  let skip = null;
+  if (_from) limit = null;
   const queryObj = CustomUtils.advancedQuery(req.query);
 
   try {

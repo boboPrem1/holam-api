@@ -4,11 +4,11 @@ const Video = require("./videosModel");
 const router = require("express").Router({ mergeParams: true });
 
 router.route("/").get(async (req, res, next) => {
-  const { limit, page, sort, fields } = req.query;
+  let { limit, page, sort, fields, _from } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
   try {
     const videos = await Video.find(queryObj)
-      .limit(limit * 1)
+      .limit(limit)
       .sort({
         createdAt: -1,
         ...sort,

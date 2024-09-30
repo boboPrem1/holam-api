@@ -20,13 +20,10 @@ const permissionSchema = mongoose.Schema(
 permissionSchema.pre(/^find/, function (next) {
   this.populate({
     path: "user",
-    select: "_id username firstname lastname role",
+    select: "_id username firstname lastname role complete_name",
   });
   next();
 });
 
-const Permission = mongoose.model(
-  "Permission",
-  permissionSchema
-);
+const Permission = mongoose.model("Permission", permissionSchema);
 module.exports = Permission;

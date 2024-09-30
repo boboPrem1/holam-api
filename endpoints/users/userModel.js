@@ -26,6 +26,11 @@ const userSchema = mongoose.Schema(
       ref: "User",
       default: [],
     },
+    tags: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "Tag",
+      default: [],
+    },
     avatar: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "File",
@@ -42,6 +47,7 @@ const userSchema = mongoose.Schema(
     password: {
       type: String,
       select: false,
+      default: "",
     },
     passwordIsSet: {
       type: Boolean,
@@ -55,11 +61,12 @@ const userSchema = mongoose.Schema(
         },
         message: "Passwords are not the same",
       },
+      default: "",
     },
     email: {
       type: String,
       lowercase: true,
-      validate: [validator.isEmail, "Please provide a valid email"],
+      default: "",
     },
     firstname: {
       type: String,
@@ -143,7 +150,7 @@ userSchema.pre(/^find/, function (next) {
   });
   this.populate({
     path: "user",
-    select: "_id username firstname lastname role",
+    select: "_id username firstname lastname role complete_name",
   });
   next();
 });

@@ -5,7 +5,7 @@
 // // @route Get /api/v1/geolocationServiceMasters
 // // @access Public
 // exports.getAllGeolocationServiceMasters = async (req, res) => {
-//   const { limit, page, sort, fields } = req.query;
+//   let { limit, page, sort, fields, _from } = req.query;
 //   const queryObj = CustomUtils.advancedQuery(req.query);
 //   const userIn = await req.userIn();
 //   if (
@@ -18,7 +18,7 @@
 //     const geolocationServiceMasters = await GeolocationServiceMaster.find(
 //       queryObj
 //     )
-//       .limit(limit * 1)
+//       .limit(limit)
 //       .sort({
 //         createdAt: -1,
 //         ...sort,
@@ -163,6 +163,9 @@
 
 const GeolocationServiceMaster = require("./geolocationServiceMastersModel.js");
 const CustomUtils = require("../../utils/index.js");
+const GeolocationService = require("../geolocationServices/geolocationServicesModel.js");
+const UserRole = require("../userRoles/userRoleModel.js");
+const User = require("../users/userModel.js");
 
 // Fonction utilitaire pour vérifier les privilèges d'admin
 const isAdmin = (user) => {
@@ -174,7 +177,16 @@ const isAdmin = (user) => {
 // @access Public
 exports.getAllGeolocationServiceMasters = async (req, res) => {
   try {
-    const { limit = 10, page = 1, sort = "-createdAt", fields } = req.query;
+    let {
+      limit = 10,
+      page = 1,
+      sort = "-createdAt",
+      fields,
+      _from,
+    } = req.query;
+    limit = parseInt(limit, 10);
+    let skip = null;
+    if (_from) limit = null;
     const queryObj = CustomUtils.advancedQuery(req.query);
     const userIn = await req.userIn();
 
@@ -187,7 +199,7 @@ exports.getAllGeolocationServiceMasters = async (req, res) => {
       queryObj
     )
       .limit(Number(limit))
-      .skip((page - 1) * limit)
+      .skip(skip)
       .sort(sort)
       .select(fields);
 
@@ -231,13 +243,44 @@ exports.createGeolocationServiceMaster = async (req, res) => {
   try {
     const CustomBody = { ...req.body };
     const userIn = await req.userIn();
+    let masterRole = await UserRole.findOne({
+      slug: "master",
+    });
 
-    CustomBody.user = userIn._id;
-    CustomBody.slug = CustomUtils.slugify(CustomBody.name);
+    const phone = {
+      indicatif: CustomBody.phone.indicatif,
+      number: CustomBody.phone.number,
+    };
+    const lastname = CustomBody.lastname;
+    const firstname = CustomBody.firstname;
+    const description = CustomBody.description;
+    const role = masterRole._id;
 
-    const newGeolocationServiceMaster = await GeolocationServiceMaster.create(
-      CustomBody
-    );
+    const password = CustomUtils.generatePassword();
+
+    const newUser = await User.create({
+      password,
+      confirmPassword: password,
+      passwordIsSet: true,
+      role,
+      phone,
+      firstname,
+      lastname,
+      complete_name: `${firstname} ${lastname}`,
+      description,
+      slug: CustomUtils.slugify(`${firstname} ${lastname}`),
+    });
+
+    // Send sms
+    const message = `Vos informations de connexion au compte HOLAM: id: ${phone.number}, pass: ${password} Gardez-le secret. Veillez à modifier votre mot de passe dès votre première connexion. Avec HOLAM, des villes plus sûres.`;
+
+    CustomBody.user = newUser._id;
+
+    const newGeolocationServiceMaster = await GeolocationServiceMaster.create({
+      user: newUser,
+      service: CustomBody.service,
+    });
+    await CustomUtils.sendSMS(message, phone.indicatif, phone.number);
     res.status(201).json(newGeolocationServiceMaster);
   } catch (error) {
     res.status(400).json({ message: error.message });
