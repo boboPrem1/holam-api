@@ -177,6 +177,7 @@ const CustomUtils = require("../../utils/index.js");
 const GeolocationServiceAgent = require("../geolocationServiceAgents/geolocationServiceAgentsModel.js");
 const GeolocationServiceMaster = require("../geolocationServiceMasters/geolocationServiceMastersModel.js");
 const GeolocationServiceClient = require("../geolocationServiceClients/geolocationServicesClientsModel.js");
+const Otp = require("../otps/otpsModel.js");
 
 const isAdminOrSuperAdmin = (user) =>
   user.role.slug === "super-administrateur" || user.role.slug === "admin";
@@ -368,6 +369,78 @@ exports.createGeolocationServicePoint = async (req, res) => {
       newGeolocationServicePoint
     );
     res.status(201).json(geolocationServicePoint);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+exports.createGeolocationServicePointSms = async (req, res) => {
+  try {
+    const userIn = await req.userIn();
+    const slug = CustomUtils.slugify(req.body.name);
+
+    let agent = null;
+    let master = null;
+
+    if (userIn.role.slug === "agent") {
+      agent = await GeolocationServiceAgent.findOne({
+        user: userIn._id,
+      });
+      master = agent.master._id;
+    }
+    if (userIn.role.slug === "master") {
+      master = await GeolocationServiceMaster.findOne({
+        user: userIn._id,
+      });
+    }
+
+    const newGeolocationServicePoint = {
+      agent: agent ? (agent ? agent._id : null) : null,
+      master: master ? master._id : null,
+      client: req.body.client,
+      location: {
+        type: "Point",
+        coordinates: req.body.location.split(" ").map(Number),
+      },
+      days: req.body.days,
+      user: userIn._id,
+    };
+
+    let randomNumber = CustomUtils.getRandomNbr();
+    let existingOtp = await Otp.findOne({ otp: randomNumber });
+
+    const endingDate = new Date();
+    endingDate.setDate(endingDate.getDate() + 7);
+
+    while (existingOtp) {
+      randomNumber = CustomUtils.getRandomNbr();
+      existingOtp = await Otp.findOne({ otp: randomNumber });
+    }
+
+    const otp = await Otp.create({
+      user: userIn._id,
+      otp: randomNumber,
+      exp: endingDate,
+    });
+
+    // Send sms
+    const message = `Une cotisation veut etre créé pour vous avec les informations suivantes :
+    Agent: ${agent.user.complete_name},
+    Client: ${client.user.complete_name},
+    Nombre de jours: ${req.body.days},
+    Veuillez communiquer le code suivant à l'agent si tout est correct Code: ${otp.otp}.
+    Avec HOLAM, des villes plus sûres.`;
+
+    await CustomUtils.sendSMS(
+      message,
+      client.user.phone.indicatif,
+      client.user.phone.number
+    );
+
+    // const geolocationServicePoint = await GeolocationServicePoint.create(
+    //   newGeolocationServicePoint
+    // );
+    res.status(201).json({ success: true });
   } catch (error) {
     res.status(400).json({ message: error.message });
   }

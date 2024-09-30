@@ -220,6 +220,7 @@ const geolocationServiceAgentsRoutes = require("./endpoints/geolocationServiceAg
 const geolocationServiceClientsRoutes = require("./endpoints/geolocationServiceClients/geolocationServicesClientsRoutes");
 const geolocationServiceTransactionsRoutes = require("./endpoints/geolocationServiceTransactions/geolocationServiceTransactionsRoutes");
 const geolocationServicePointsRoutes = require("./endpoints/geolocationServicePoints/geolocationServicePointsRoutes");
+const geolocationServicePointsRoutesNeo = require("./endpoints/geolocationServicePoints/geolocationServicePointsRoutesNeo");
 const monitoringsRoutes = require("./endpoints/monitorings/monitoringsRoutes");
 const dashboardRoutes = require("./endpoints/tableauDeBord/dashboardRoutes");
 const uploadRoutes = require("./endpoints/uploads/uploadRoutes");
@@ -271,7 +272,14 @@ app.use(API_URL_BASE + "geolocation_service_masters", geolocationServiceMastersR
 app.use(API_URL_BASE + "geolocation_service_agents", geolocationServiceAgentsRoutes);
 app.use(API_URL_BASE + "geolocation_service_clients", geolocationServiceClientsRoutes);
 app.use(API_URL_BASE + "geolocation_service_transactions", geolocationServiceTransactionsRoutes);
-app.use(API_URL_BASE + "geolocation_service_points", geolocationServicePointsRoutes);
+app.use(
+  API_URL_BASE + "geolocation_service_points",
+  geolocationServicePointsRoutes
+);
+app.use(
+  API_URL_BASE + "verify_point",
+  geolocationServicePointsRoutesNeo
+);
 app.use(API_URL_BASE + "monitorings", monitoringsRoutes);
 app.use(API_URL_BASE + "dashboard", dashboardRoutes);
 app.use(API_URL_BASE + "upload", uploadRoutes);
