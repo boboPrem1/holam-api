@@ -1,5 +1,5 @@
 const router = require("express").Router({ mergeParams: true });
-const {} = require("./geolocationServicePointsController.js");
+const { createGeolocationServicePointSms } = require("./geolocationServicePointsController.js");
 
 router.route("/").post(createGeolocationServicePointSms);
 
