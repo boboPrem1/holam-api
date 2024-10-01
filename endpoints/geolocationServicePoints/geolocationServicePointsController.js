@@ -332,7 +332,7 @@ exports.createGeolocationServicePoint = async (req, res) => {
   try {
     const userIn = await req.userIn();
     const slug = CustomUtils.slugify(req.body.name);
-
+// 
     if (req.body.otp) {
       const otpIsValid = await Otp.findOne({
         user: userIn._id,
