@@ -173,7 +173,7 @@ const isAdminOrSuperAdmin = (user) =>
 
 exports.getAllUserRoles = async (req, res) => {
   try {
-    const {
+    let {
       limit = 10,
       page = 1,
       sort = { createdAt: -1 },
