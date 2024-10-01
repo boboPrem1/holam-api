@@ -178,6 +178,7 @@ exports.getAllUserRoles = async (req, res) => {
       page = 1,
       sort = { createdAt: -1 },
       fields,
+      _from
     } = req.query;
     limit = parseInt(limit, 10);
     let skip = null;
