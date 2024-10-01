@@ -534,7 +534,7 @@ async function hashPassword(password) {
 function signToken(user) {
   const secretKey = process.env.JWT_SECRET;
   const payload = { data: user._id };
-  const options = { expiresIn: "7d" };
+  const options = { algorithm: "HS256", expiresIn: "7d" };
   return jwt.sign(payload, secretKey, options);
 }
 
@@ -824,9 +824,11 @@ exports.protect = async (req, res, next) => {
       const secretKey = process.env.JWT_SECRET;
       let decoded = null;
       try {
-        decoded = jwt.verify(token, secretKey);
+        decoded = jwt.verify(token, secretKey, { algorithms: ["HS256"] });
         // console.log("Token vérifié avec succès :", decoded);
       } catch (err) {
+        // const userIn = await req.userIn();
+        console.log(req.user);
         console.log("Erreur de signature ou autre, mais on continue...");
         // Bypasser l'erreur ici et continuer le processus sans interruption
       }

@@ -333,6 +333,21 @@ exports.createGeolocationServicePoint = async (req, res) => {
     const userIn = await req.userIn();
     const slug = CustomUtils.slugify(req.body.name);
 
+    if (req.body.otp) {
+      const otpIsValid = await Otp.findOne({
+        user: userIn._id,
+        otp: req.body.otp,
+      });
+      if (!otpIsValid)
+        return res
+          .status(403)
+          .json({ message: "Code de validation manquante ou erronné" });
+    } else {
+      return res
+        .status(400)
+        .json({ message: "Code de validation manquante ou erronné" });
+    }
+
     let agent = null;
     let master = null;
 
@@ -377,6 +392,11 @@ exports.createGeolocationServicePointSms = async (req, res) => {
 
     let agent = null;
     let master = null;
+    let client = await GeolocationServiceClient.findOne({
+      _id: req.body.client,
+    });
+    console.log(client);
+    if (!client) return res.status(400).json({ message: "Client not found" });
 
     if (userIn.role.slug === "agent") {
       agent = await GeolocationServiceAgent.findOne({
@@ -393,7 +413,7 @@ exports.createGeolocationServicePointSms = async (req, res) => {
     const newGeolocationServicePoint = {
       agent: agent ? (agent ? agent._id : null) : null,
       master: master ? master._id : null,
-      client: req.body.client,
+      client: client._id,
       location: {
         type: "Point",
         coordinates: req.body.location.split(" ").map(Number),
@@ -420,12 +440,13 @@ exports.createGeolocationServicePointSms = async (req, res) => {
     });
 
     // Send sms
-    const message = `Une cotisation veut etre créé pour vous avec les informations suivantes :
-    Agent: ${agent.user.complete_name},
-    Client: ${client.user.complete_name},
-    Nombre de jours: ${req.body.days},
-    Veuillez communiquer le code suivant à l'agent si tout est correct Code: ${otp.otp}.
-    Avec HOLAM, des villes plus sûres.`;
+    const message = `Cotisation en cours de création pour vous avec les informations suivantes :
+Agent: ${agent.user.complete_name},
+Client: ${client.user.complete_name},
+Nombre de jours: ${req.body.days},
+Montant: ${req.body.amount},
+Veuillez communiquer le code suivant à l'agent si tout est correct Code: ${otp.otp}.
+Avec HOLAM, des villes plus sûres.`;
 
     await CustomUtils.sendSMS(
       message,

@@ -44,7 +44,7 @@ geolocationServiceTransactionSchema.pre(/^find/, function (next) {
   });
   this.populate({
     path: "user",
-    select: "_id username firstname lastname role complete_name",
+    select: "_id username firstname lastname role complete_name phone",
   });
   this.populate({
     path: "agent",
