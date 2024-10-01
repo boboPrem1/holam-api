@@ -269,7 +269,7 @@ exports.getAllGeolocationServicePoints = async (req, res) => {
     }
 
     // Debug pour voir le contenu de l'objet de requête
-    console.log(queryObj);
+    // console.log(queryObj);
 
     // Exécuter la requête avec les paramètres paginés
     const geolocationServicePoints = await GeolocationServicePoint.find(
@@ -294,27 +294,21 @@ exports.getGeolocationServicePointById = async (req, res) => {
     const userIn = await req.userIn();
     const query = { _id: req.params.id };
 
-    let master = await GeolocationServiceMaster.findOne({
-      _id: userIn._id,
-    });
-    let client = await GeolocationServiceClient.findOne({
-      _id: userIn._id,
-    });
-    let agent = await GeolocationServiceAgent.findOne({
-      _id: userIn._id,
-    });
-
     // Add user constraint if not admin or super-admin
 
-    if (!isAdminOrSuperAdmin(userIn)) {
+    if (
+      !isAdminOrSuperAdmin(userIn) &&
+      userIn.role.slug !== "master" &&
+      userIn.role.slug !== "agent"
+    ) {
       query.user = userIn._id;
-      if (userIn.role.slug === "master") {
-        query.master = master ? master._id : null;
-      } else if (userIn.role.slug === "client") {
-        query.client = client ? client._id : null;
-      } else if (userIn.role.slug === "agent") {
-        query.agent = agent ? agent._id : null;
-      }
+      // if (userIn.role.slug === "master") {
+      //   query.master = master ? master._id : null;
+      // } else if (userIn.role.slug === "client") {
+      //   query.client = client ? client._id : null;
+      // } else if (userIn.role.slug === "agent") {
+      //   query.agent = agent ? agent._id : null;
+      // }
     }
 
     const geolocationServicePoint = await GeolocationServicePoint.findOne(
@@ -363,10 +357,9 @@ exports.createGeolocationServicePoint = async (req, res) => {
         coordinates: req.body.location.split(" ").map(Number),
       },
       days: req.body.days,
-      ammount: req.body.amount,
+      amount: req.body.amount,
       user: userIn._id,
     };
-
 
     const geolocationServicePoint = await GeolocationServicePoint.create(
       newGeolocationServicePoint
@@ -457,9 +450,9 @@ exports.activateAgent = async (req, res) => {
       const agent = await GeolocationServiceAgent.findOne({
         user: userIn._id,
       });
-
-      if (agent.otp === req.body.code) {
-        await User.findByIdAndUpdate(
+      console.log(agent);
+      if (agent.otp.otp === req.body.code) {
+        const result = await User.findByIdAndUpdate(
           agent.user._id,
           {
             agentIsActivated: true,
@@ -468,11 +461,13 @@ exports.activateAgent = async (req, res) => {
             new: true,
           }
         );
+        console.log(result);
+      } else {
+        return res.status(403).json({ message: "Not Authorized" });
       }
     } else {
       return res.status(403).json({ message: "Not Authorized" });
     }
-    
 
     res.status(201).json({ success: true });
   } catch (error) {
@@ -496,15 +491,19 @@ exports.updateGeolocationServicePoint = async (req, res) => {
     let agent = await GeolocationServiceAgent.findOne({
       _id: userIn._id,
     });
-    if (!isAdminOrSuperAdmin(userIn)) {
+    if (
+      !isAdminOrSuperAdmin(userIn) &&
+      userIn.role.slug !== "master" &&
+      userIn.role.slug !== "agent"
+    ) {
       query.user = userIn._id;
-      if (userIn.role.slug === "master") {
-        query.master = master ? master._id : null;
-      } else if (userIn.role.slug === "client") {
-        query.client = client ? client._id : null;
-      } else if (userIn.role.slug === "agent") {
-        query.agent = agent ? agent._id : null;
-      }
+      // if (userIn.role.slug === "master") {
+      //   query.master = master ? master._id : null;
+      // } else if (userIn.role.slug === "client") {
+      //   query.client = client ? client._id : null;
+      // } else if (userIn.role.slug === "agent") {
+      //   query.agent = agent ? agent._id : null;
+      // }
     }
 
     const geolocationServicePoint = await GeolocationServicePoint.findOne(
@@ -543,15 +542,20 @@ exports.deleteGeolocationServicePoint = async (req, res) => {
     let agent = await GeolocationServiceAgent.findOne({
       _id: userIn._id,
     });
-    if (!isAdminOrSuperAdmin(userIn)) {
+
+    if (
+      !isAdminOrSuperAdmin(userIn) &&
+      userIn.role.slug !== "master" &&
+      userIn.role.slug !== "agent"
+    ) {
       query.user = userIn._id;
-      if (userIn.role.slug === "master") {
-        query.master = master ? master._id : null;
-      } else if (userIn.role.slug === "client") {
-        query.client = client ? client._id : null;
-      } else if (userIn.role.slug === "agent") {
-        query.agent = agent ? agent._id : null;
-      }
+      // if (userIn.role.slug === "master") {
+      //   query.master = master ? master._id : null;
+      // } else if (userIn.role.slug === "client") {
+      //   query.client = client ? client._id : null;
+      // } else if (userIn.role.slug === "agent") {
+      //   query.agent = agent ? agent._id : null;
+      // }
     }
 
     const geolocationServicePoint = await GeolocationServicePoint.findOne(

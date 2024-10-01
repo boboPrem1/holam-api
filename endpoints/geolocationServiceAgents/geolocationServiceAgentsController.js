@@ -290,7 +290,7 @@ exports.createGeolocationServiceAgent = async (req, res) => {
     }
 
     const otp = await Otp.create({
-      user: userIn._id,
+      user: newUser._id,
       otp: randomNumber,
       exp: endingDate,
     });
