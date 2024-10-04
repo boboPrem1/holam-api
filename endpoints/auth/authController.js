@@ -716,6 +716,30 @@ exports.setPassword = async (req, res, next) => {
   return res.status(200).json({ success: true });
 };
 
+exports.resetPassword = async (req, res, next) => {
+  const { indicatif, number, oldPassword, newPassword } = req.body;
+
+  const existingUser = await User.findOne({
+    "phone.indicatif": indicatif,
+    "phone.number": number,
+  });
+
+  if (existingUser) {
+    if (!existingUser || !(await existingUser.comparePassword(oldPassword))) {
+      return res
+        .status(401)
+        .json({ message: "Identifiant ou mot de passe incorrect !" });
+    }
+    await User.findByIdAndUpdate(
+      existingUser._id,
+      { newPassword, passwordIsSet: true },
+      { new: true }
+    );
+  }
+
+  return res.status(200).json({ success: true });
+};
+
 exports.signinWithTel = async (req, res, next) => {
   try {
     const { indicatif, number, password } = req.body;

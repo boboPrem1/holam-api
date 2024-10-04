@@ -181,7 +181,7 @@ exports.getAllChats = async (req, res) => {
       userIn.role.slug !== "super-administrateur" &&
       userIn.role.slug !== "admin"
     ) {
-      queryObj.user = userIn._id;
+      queryObj.members = { $in: [userIn._id] };
     }
 
     const chats = await Chat.find(queryObj)
@@ -255,6 +255,7 @@ exports.updateChat = async (req, res) => {
       userIn.role.slug !== "admin"
     ) {
       queryObj.user = userIn._id;
+      queryObj.members = { $in: [userIn._id] };
     }
 
     const chat = await Chat.findOneAndUpdate(queryObj, req.body, {
@@ -286,6 +287,7 @@ exports.deleteChat = async (req, res) => {
       userIn.role.slug !== "admin"
     ) {
       queryObj.user = userIn._id;
+      queryObj.members = { $in: [userIn._id] };
     }
 
     const chat = await Chat.findOneAndDelete(queryObj);

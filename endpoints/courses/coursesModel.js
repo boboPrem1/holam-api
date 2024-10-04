@@ -24,6 +24,16 @@ const courseSchema = mongoose.Schema(
       required: true,
       default: [],
     },
+    chat: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Chat",
+      default: "000000000000000000000000",
+    },
+    learners: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "User",
+      default: [],
+    },
     isPaid: {
       type: Boolean,
       default: false,
@@ -46,8 +56,16 @@ courseSchema.pre(/^find/, function (next) {
     select: "_id username firstname lastname role complete_name phone",
   });
   this.populate({
+    path: "learners",
+    select: "_id username firstname lastname role complete_name phone",
+  });
+  this.populate({
     path: "videos",
     select: "video thumbnail",
+  });
+  this.populate({
+    path: "chat",
+    select: "groupName user members groupPicture lastMessage",
   });
   next();
 });

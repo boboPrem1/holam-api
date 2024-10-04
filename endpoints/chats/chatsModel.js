@@ -11,10 +11,8 @@ const chatSchema = mongoose.Schema(
     members: {
       type: [mongoose.Schema.Types.ObjectId],
       ref: "User",
-      default: "000000000000000000000000",
-      required: true,
     },
-    isGroupChat: { type: Boolean, default: false, required: true },
+    isGroupChat: { type: Boolean, default: true, required: true },
     groupName: { type: String },
     groupPicture: {
       type: mongoose.Schema.Types.ObjectId,
@@ -38,7 +36,7 @@ const chatSchema = mongoose.Schema(
 chatSchema.pre(/^find/, function (next) {
   this.populate({
     path: "members",
-    select: "_id role",
+    select: "_id username firstname lastname role complete_name phone",
   });
   this.populate({
     path: "groupPicture",

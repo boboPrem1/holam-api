@@ -158,6 +158,7 @@
 
 const Course = require("./coursesModel.js");
 const CustomUtils = require("../../utils/index.js");
+const Chat = require("../chats/chatsModel.js");
 
 // Helper function to check if the user has admin privileges
 const isAdmin = (userIn) => {
@@ -225,6 +226,14 @@ exports.createCourse = async (req, res) => {
     const userIn = await req.userIn();
     const CustomBody = { ...req.body, user: userIn._id };
     CustomBody.slug = CustomUtils.slugify(CustomBody.name);
+
+    const newChat = await Chat.create({
+      user: userIn._id,
+      groupName: CustomBody.title + "'s Chat",
+      members: [userIn._id],
+    });
+
+    CustomBody.chat = newChat._id;
 
     const course = await Course.create(CustomBody);
     res.status(201).json(course);

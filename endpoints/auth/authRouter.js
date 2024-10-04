@@ -8,6 +8,7 @@ const {
   setPassword,
   signinWithTelOtp,
   signinWithEmail,
+  resetPassword,
 } = require("./authController.js");
 
 router.route("/signup").post(signup);
@@ -17,5 +18,6 @@ router.route("/signin-with-tel-otp").post(signinWithTelOtp);
 router.route("/set-password").post(setPassword);
 router.route("/sign").post(sign);
 router.route("/verify-otp").post(verifyOtp);
+router.route("/reset-password").post(resetPassword);
 
 module.exports = router;
