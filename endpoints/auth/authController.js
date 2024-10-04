@@ -719,12 +719,12 @@ exports.setPassword = async (req, res, next) => {
 exports.resetPassword = async (req, res, next) => {
   try {
     const { indicatif, number, oldPassword, newPassword } = req.body;
-
     const existingUser = await User.findOne({
       "phone.indicatif": indicatif,
       "phone.number": number,
-    });
+    }).select("+password");
 
+    // console.log(existingUser);
     if (existingUser) {
       if (!existingUser || !(await existingUser.comparePassword(oldPassword))) {
         return res
