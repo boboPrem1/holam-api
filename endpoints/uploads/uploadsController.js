@@ -43,7 +43,6 @@
 //   });
 // };
 
-
 // exports.upload = async (req, res) => {
 //   try {
 //     const user = await req.userIn();
@@ -172,7 +171,6 @@
 //   }
 // };
 
-
 const File = require("../files/filesModel");
 const {
   uploadImageToS3,
@@ -186,32 +184,53 @@ const fs = require("fs");
 const ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
 const ffprobePath = require("@ffprobe-installer/ffprobe").path;
 const ffmpeg = require("fluent-ffmpeg");
+const s3 = require("./s3");
+const { v4: uuidv4 } = require("uuid");
+const oldS3 = require("./oldS3");
 ffmpeg.setFfmpegPath(ffmpegPath);
 ffmpeg.setFfprobePath(ffprobePath);
 
 const cdn_url = process.env.CDN_URL;
 
 // Fonction pour générer une miniature à partir d'une vidéo
-const generateThumbnail = (file) => {
-  return new Promise((resolve, reject) => {
-    const outputPath = path.join(
-      __dirname,
-      "temp",
-      `${file.originalname}-thumbnail.png`
-    );
+// const generateThumbnail = (file) => {
+//   return new Promise((resolve, reject) => {
+//     const outputPath = path.join(
+//       __dirname,
+//       "temp",
+//       `${file.originalname}-thumbnail.png`
+//     );
 
-    ffmpeg(file.location)
+//     ffmpeg(file.location)
+//       .screenshot({
+//         timestamps: ["50%"],
+//         filename: outputPath,
+//         size: "320x240",
+//       })
+//       .on("end", () => {
+//         console.log(`Thumbnail generated at: ${outputPath}`);
+//         resolve(outputPath);
+//       })
+//       .on("error", (err) => {
+//         console.error(`Error generating thumbnail: ${err.message}`);
+//         reject(err);
+//       });
+//   });
+// };
+
+const generateThumbnail = (filePath, outputFileName) => {
+  return new Promise((resolve, reject) => {
+    const outputPath = path.join(__dirname, "thumbnails", outputFileName);
+    ffmpeg(filePath)
       .screenshot({
         timestamps: ["50%"],
         filename: outputPath,
         size: "320x240",
       })
       .on("end", () => {
-        console.log(`Thumbnail generated at: ${outputPath}`);
         resolve(outputPath);
       })
       .on("error", (err) => {
-        console.error(`Error generating thumbnail: ${err.message}`);
         reject(err);
       });
   });
@@ -260,24 +279,38 @@ exports.uploadVideo = async (req, res) => {
     const user = await req.userIn();
     const file = req.file;
 
-    // Générer la miniature
-    const thumbnailPath = await generateThumbnail(file);
+    const videoKey = file.key;
+    const videoUrl = file.location;
+    const thumbnailFileName = `${uuidv4()}-thumbnail.png`;
+    const thumbnailPath = await generateThumbnail(
+      file.location,
+      thumbnailFileName
+    );
+    const thumbnailKey = `holam/thumbnails/${thumbnailFileName}`;
+    const thumbnailUrl = await uploadThumbnailToS3(
+      thumbnailPath,
+      thumbnailKey,
+      cdn_url
+    );
 
     // Uploader la miniature sur S3
-    const thumbnailUrl = await uploadThumbnailToS3({
-      path: thumbnailPath,
-      originalname: `${file.originalname}-thumbnail.png`,
-    });
+    // const thumbnailUrl = await uploadThumbnailToS3(
+    //   thumbnailPath,
+    //   `${file.originalname}-thumbnail.png`
+    // );
 
-    // Supprimer la miniature locale après l'upload
+    // console.log(thumbnailUrl);
+
+    // // Supprimer la miniature locale après l'upload
     deleteTempFile(thumbnailPath);
 
-    // Enregistrer le fichier vidéo et la miniature dans la base de données
+    // // Enregistrer le fichier vidéo et la miniature dans la base de données
     const newFile = await uploadFileToDB(user, file, thumbnailUrl);
 
-    res
-      .status(200)
-      .json({ message: "Video and thumbnail uploaded successfully", newFile });
+    res.status(200).json({
+      message: "Video and thumbnail uploaded successfully",
+      newFile,
+    });
   } catch (error) {
     res.status(500).json({ message: `Video upload error: ${error.message}` });
   }
@@ -312,3 +345,23 @@ exports.uploadOther = async (req, res) => {
     res.status(500).json({ message: `File upload error: ${error.message}` });
   }
 };
+
+// const uploadThumbnailToS3 = async (filePath, filename) => {
+//   const fileContent = fs.readFileSync(filePath);
+//   const params = {
+//     Bucket: process.env.S3_BUCKET_NAME,
+//     Key: `thumbnails/${path.basename(filename)}`, // S3 file path
+//     Body: fileContent,
+//     ContentType: "image/png", // Adjust content type according to your needs
+//     ACL: "public-read", // Make the file publicly accessible if needed
+//   };
+
+//   try {
+//     const uploadResult = await oldS3.upload(params).promise();
+//     console.log("Thumbnail uploaded to S3:", uploadResult.Location);
+//     return uploadResult.Location; // Return the URL of the uploaded thumbnail
+//   } catch (error) {
+//     console.error("Error uploading thumbnail to S3:", error);
+//     throw new Error("Thumbnail upload failed");
+//   }
+// };

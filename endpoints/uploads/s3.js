@@ -12,3 +12,4 @@ const s3 = new S3Client({
 });
 
 module.exports = s3;
+

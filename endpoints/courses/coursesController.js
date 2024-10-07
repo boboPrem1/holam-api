@@ -227,16 +227,26 @@ exports.createCourse = async (req, res) => {
     const CustomBody = { ...req.body, user: userIn._id };
     CustomBody.slug = CustomUtils.slugify(CustomBody.name);
 
-    const newChat = await Chat.create({
-      user: userIn._id,
+    const existingChat = Chat.find({
       groupName: CustomBody.title + "'s Chat",
-      members: [userIn._id],
     });
+    if (!existingChat.length) {
+      const newChat = await Chat.create({
+        user: userIn._id,
+        groupName: CustomBody.title + "'s Chat",
+        members: [userIn._id],
+      });
 
-    CustomBody.chat = newChat._id;
+      CustomBody.chat = newChat._id;
 
-    const course = await Course.create(CustomBody);
-    res.status(201).json(course);
+      const course = await Course.create(CustomBody);
+      res.status(201).json(course);
+    } else {
+      CustomBody.chat = existingChat._id;
+
+      const course = await Course.create(CustomBody);
+      res.status(201).json(course);
+    }
   } catch (error) {
     res.status(400).json({ message: error.message });
   }

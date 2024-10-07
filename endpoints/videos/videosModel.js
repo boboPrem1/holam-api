@@ -8,11 +8,6 @@ const videoSchema = mongoose.Schema(
       required: true,
       default: "000000000000000000000000",
     },
-    thumbnail: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "File",
-      default: "000000000000000000000000",
-    },
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -72,11 +67,7 @@ videoSchema.pre(/^find/, function (next) {
   });
   this.populate({
     path: "video",
-    select: "user path",
-  });
-  this.populate({
-    path: "thumbnail",
-    select: "user path",
+    select: "user path thumbnail",
   });
   this.populate({
     path: "tags",

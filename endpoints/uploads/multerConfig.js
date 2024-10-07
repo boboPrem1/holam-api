@@ -138,13 +138,13 @@
 //   uploadThumbnailToS3,
 // };
 
-
 const multer = require("multer");
 const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const path = require("path");
 const multerS3 = require("multer-s3");
 const s3 = require("./s3");
+const fs = require("fs");
 require("dotenv").config();
 
 const BUCKET_NAME = process.env.AWS_BUCKET_NAME;
@@ -183,29 +183,47 @@ const uploadAudioToS3 = multer({
 const uploadOtherToS3 = multer({
   storage: createMulterStorage("holam/others"),
 });
+// const uploadThumbnailToS3 = multer({
+//   storage: createMulterStorage("holam/thumbnails"),
+// });
+
+const uploadThumbnailToS3 = async (filePath, key, cdn_url) => {
+  const fileStream = fs.createReadStream(filePath);
+  const uploadParams = {
+    Bucket: BUCKET_NAME,
+    Key: key,
+    Body: fileStream,
+    ContentType: "image/png",
+    ACL: "public-read",
+  };
+  const command = new PutObjectCommand(uploadParams);
+  const result = await s3.send(command);
+  return `${cdn_url}${key}`;
+};
+
 
 // Upload pour les thumbnails (miniatures)
-const thumbnailStorage = multerS3({
-  s3: s3,
-  bucket: BUCKET_NAME,
-  acl: "public-read",
-  metadata: (req, file, cb) => {
-    cb(null, {
-      fieldName: file.fieldname,
-      mimeType: file.mimetype,
-    });
-  },
-  key: (req, file, cb) => {
-    const thumbnailName = `holam/thumbnails/${Date.now()}_${path.basename(
-      file.originalname,
-      path.extname(file.originalname)
-    )}-thumbnail.png`;
-    cb(null, thumbnailName);
-  },
-});
-const uploadThumbnailToS3 = multer({ storage: thumbnailStorage }).single(
-  "file"
-);
+// const thumbnailStorage = multerS3({
+//   s3: s3,
+//   bucket: BUCKET_NAME,
+//   acl: "public-read",
+//   metadata: (req, file, cb) => {
+//     cb(null, {
+//       fieldName: file.fieldname,
+//       mimeType: file.mimetype,
+//     });
+//   },
+//   key: (req, file, cb) => {
+//     const thumbnailName = `holam/thumbnails/${Date.now()}_${path.basename(
+//       file.originalname,
+//       path.extname(file.originalname)
+//     )}-thumbnail.png`;
+//     cb(null, thumbnailName);
+//   },
+// });
+// const uploadThumbnailToS3 = multer({ storage: thumbnailStorage }).single(
+//   "file"
+// );
 
 // Export des modules d'upload
 module.exports = {

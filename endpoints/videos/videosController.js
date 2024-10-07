@@ -169,6 +169,7 @@
 const Video = require("./videosModel.js");
 const CustomUtils = require("../../utils/index.js");
 const File = require("../files/filesModel.js");
+const Tag = require("../tags/tagsModel.js");
 
 // @Get all videos
 // @Route: /api/v1/videos
@@ -236,6 +237,29 @@ exports.createVideo = async (req, res) => {
     const userIn = await req.userIn();
     CustomBody.user = userIn._id;
     CustomBody.slug = slug;
+
+    const tagsToCreate = CustomBody.tags.split(";");
+    const tags = [];
+
+    for (const tag of tagsToCreate) {
+      // console.log(tag);
+      const existingTag = await Tag.find({
+        $or: [{ name: tag }, { slug: tag }],
+      });
+
+      if (!existingTag.length) {
+        const newTag = await Tag.create({
+          name: tag,
+          slug: CustomUtils.slugify(tag),
+          user: userIn._id,
+        });
+        tags.push(newTag._id);
+      } else {
+        tags.push(existingTag[0]._id);
+      }
+    }
+
+    CustomBody.tags = [...tags];
 
     if (CustomBody.video) {
       const video = await File.findById(CustomBody.video);
