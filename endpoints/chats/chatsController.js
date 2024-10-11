@@ -157,6 +157,7 @@
 
 const Chat = require("./chatsModel.js");
 const CustomUtils = require("../../utils/index.js");
+const Course = require("../courses/coursesModel.js");
 
 // @Get all chats
 // @Route: /api/v1/chats
@@ -262,6 +263,151 @@ exports.updateChat = async (req, res) => {
       new: true,
       runValidators: true,
     });
+
+    if (!chat) {
+      return res.status(404).json({ message: "Chat not found!" });
+    }
+
+    res.status(200).json(chat);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @Update chat by id
+// @Route: /api/v1/chats/:id
+// @Access: Private
+exports.addMemberLearnerToCourseChat = async (req, res) => {
+  try {
+    const userIn = await req.userIn();
+    const queryObj = {
+      _id: req.params.id,
+      members: {
+        $nin: req.body.user,
+      },
+    };
+
+    // Restreindre l'accès au chat à l'utilisateur courant s'il n'est pas super admin ou admin
+    // if (
+    //   userIn.role.slug !== "super-administrateur" &&
+    //   userIn.role.slug !== "admin"
+    // ) {
+    //   queryObj.user = userIn._id;
+    //   queryObj.members = { $in: [userIn._id] };
+    // }
+
+    const chatFinded = await Chat.findOne(queryObj);
+
+    if (!chatFinded) {
+      return res
+        .status(404)
+        .json({ message: "Chat not found or user already in chat!" });
+    }
+
+    const courseFinded = await Course.findOne({
+      chat: chatFinded._id,
+      learners: {
+        $nin: req.body.user,
+      },
+    });
+
+    await Course.findOneAndUpdate(
+      {
+        chat: chatFinded._id,
+        learners: {
+          $nin: req.body.user,
+        },
+      },
+      {
+        learners: [...courseFinded.learners, req.body.user],
+      },
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+
+    const chat = await Chat.findOneAndUpdate(
+      queryObj,
+      {
+        members: [...chatFinded.members, req.body.user],
+      },
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+
+    if (!chat) {
+      return res.status(404).json({ message: "Chat not found!" });
+    }
+
+    res.status(200).json(chat);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.removeMemberLearnerToCourseChat = async (req, res) => {
+  try {
+    const userIn = await req.userIn();
+    const queryObj = {
+      _id: req.params.id,
+      members: {
+        $in: req.body.user,
+      },
+    };
+
+    // Restreindre l'accès au chat à l'utilisateur courant s'il n'est pas super admin ou admin
+    // if (
+    //   userIn.role.slug !== "super-administrateur" &&
+    //   userIn.role.slug !== "admin"
+    // ) {
+    //   queryObj.user = userIn._id;
+    //   queryObj.members = { $in: [userIn._id] };
+    // }
+
+    const chatFinded = await Chat.findOne(queryObj);
+
+    if (!chatFinded) {
+      return res
+        .status(404)
+        .json({ message: "Chat not found or user not in chat!" });
+    }
+
+    const courseFinded = await Course.findOne({
+      chat: chatFinded._id,
+      learners: {
+        $in: [req.body.user],
+      },
+    });
+
+    await Course.findOneAndUpdate(
+      {
+        chat: chatFinded._id,
+        learners: {
+          $in: req.body.user,
+        },
+      },
+      {
+        $pull: { learners: req.body.user },
+      },
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+
+    const chat = await Chat.findOneAndUpdate(
+      queryObj,
+      {
+        $pull: { members: req.body.user },
+      },
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
 
     if (!chat) {
       return res.status(404).json({ message: "Chat not found!" });
