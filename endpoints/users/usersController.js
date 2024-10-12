@@ -260,6 +260,7 @@ const CustomUtils = require("../../utils/index.js");
 const User = require("./userModel");
 const UserRole = require("../userRoles/userRoleModel");
 const bcrypt = require("bcryptjs");
+const Tag = require("../tags/tagsModel.js");
 
 // Vérifie si l'utilisateur a accès à une fonctionnalité spécifique
 const hasAccess = (userIn, roles = []) => {
@@ -330,6 +331,56 @@ exports.getAllUsers = async (req, res) => {
       .select(fields);
 
     res.status(200).json(users);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.setTags = async (req, res) => {
+  try {
+    const userIn = await req.userIn();
+
+    let tagsSended = req.body.tags;
+    const userTags = userIn.tags;
+
+    for (const tag of userTags) {
+      const tagsFiltered = tagsSended.filter((t) => t != tag);
+      tagsSended = [...tagsFiltered];
+    }
+    if (!tagsSended.length) {
+      return res.status(400).json({ message: "Tags not existing or already existing in user's tags" });
+    }
+
+    console.log(tagsSended);
+
+    // tagsSended.map(async (tag) => {
+    // const tagExisted = await Tag.findOne({
+    //   _id: tag,
+    // });
+
+    // if (tagExisted && tagExistedInUser) {
+    await User.findOneAndUpdate(
+      {
+        _id: userIn._id,
+        tags: {
+          $nin: [...tagsSended],
+        },
+      },
+      {
+        tags: [...userIn.tags, ...tagsSended],
+        goodToKnowIsActivated: true,
+      },
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+    // }
+    // });
+
+    const user = await req.userIn();
+
+    res.status(200).json(user);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
