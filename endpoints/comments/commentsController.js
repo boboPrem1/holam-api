@@ -157,6 +157,7 @@
 // };
 
 const Comment = require("./commentsModel.js");
+const Video = require("../videos/videosModel.js");
 const CustomUtils = require("../../utils/index.js");
 
 // @Get all comments
@@ -209,6 +210,92 @@ exports.getCommentById = async (req, res) => {
     }
 
     res.status(200).json(comment);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @Get comment by id
+// @Route: /api/v1/comments/:id
+// @Access: Public
+exports.AddCommentToAVideo = async (req, res) => {
+  try {
+    const userIn = await req.userIn();
+
+    const query = {
+      _id: req.params.id,
+    };
+
+    const video = await Video.findOne(query);
+
+    if (!video) {
+      return res.status(404).json({ message: CustomUtils.consts.NOT_FOUND });
+    }
+
+    const comment = await Comment.create({
+      user: userIn._id,
+      video: video._id,
+      content: req.body.content,
+    });
+
+    if (!comment) {
+      return res.status(404).json({ message: CustomUtils.consts.NOT_FOUND });
+    }
+
+    const updated = await Video.findByIdAndUpdate(
+      video._id,
+      {
+        $push: { comments: comment._id },
+      },
+      {
+        new: true,
+      }
+    );
+
+    res.status(200).json(comment);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @Get comment by id
+// @Route: /api/v1/comments/:id
+// @Access: Public
+exports.RemoveCommentFromAVideo = async (req, res) => {
+  try {
+    const userIn = await req.userIn();
+
+    const query = {
+      _id: req.params.id,
+    };
+
+    const video = await Video.findOne({
+      comments: {
+        $in: req.params.id,
+      },
+    });
+
+    if (!video) {
+      return res.status(404).json({ message: CustomUtils.consts.NOT_FOUND });
+    }
+
+    const comment = await Comment.findByIdAndDelete(query);
+
+    if (!comment) {
+      return res.status(404).json({ message: CustomUtils.consts.NOT_FOUND });
+    }
+
+    const updated = await Video.findByIdAndUpdate(
+      video._id,
+      {
+        $pull: { comments: comment._id },
+      },
+      {
+        new: true,
+      }
+    );
+
+    res.status(200).json({ message: "Comment deleted successfully!" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

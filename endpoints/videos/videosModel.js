@@ -24,6 +24,11 @@ const videoSchema = mongoose.Schema(
       ref: "User",
       default: "000000000000000000000000",
     },
+    viewed: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "User",
+      default: "000000000000000000000000",
+    },
     comments: {
       type: [mongoose.Schema.Types.ObjectId],
       ref: "Comment",

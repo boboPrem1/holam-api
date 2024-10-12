@@ -275,6 +275,105 @@ exports.createVideo = async (req, res) => {
   }
 };
 
+exports.AddLikeToAVideo = async (req, res) => {
+  try {
+    const userIn = await req.userIn();
+
+    const query = {
+      _id: req.params.id,
+      likes: {
+        $nin: userIn._id,
+      },
+    };
+
+    const video = await Video.findOne(query);
+
+    if (!video) {
+      return res.status(404).json({ message: CustomUtils.consts.NOT_FOUND });
+    }
+
+    const updated = await Video.findByIdAndUpdate(
+      video._id,
+      {
+        $push: { likes: userIn._id },
+      },
+      {
+        new: true,
+      }
+    );
+
+    res.status(200).json(updated);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.ViewAVideo = async (req, res) => {
+  try {
+    const userIn = await req.userIn();
+
+    const query = {
+      _id: req.params.id,
+      viewed: {
+        $nin: userIn._id,
+      },
+    };
+
+    const video = await Video.findOne(query);
+
+    if (!video) {
+      return res.status(404).json({ message: CustomUtils.consts.NOT_FOUND });
+    }
+
+    const updated = await Video.findByIdAndUpdate(
+      video._id,
+      {
+        $push: { viewed: userIn._id },
+      },
+      {
+        new: true,
+      }
+    );
+
+    res.status(200).json(updated);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.RemoveLikeFromAVideo = async (req, res) => {
+  try {
+    const userIn = await req.userIn();
+
+    const query = {
+      _id: req.params.id,
+      likes: {
+        $in: userIn._id,
+      },
+    };
+
+    const video = await Video.findOne(query);
+
+    if (!video) {
+      return res.status(404).json({ message: CustomUtils.consts.NOT_FOUND });
+    }
+
+    const updated = await Video.findByIdAndUpdate(
+      video._id,
+      {
+        $pull: { likes: userIn._id },
+      },
+      {
+        new: true,
+      }
+    );
+
+    res.status(200).json(updated);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @Update video by id
 // @Route: /api/v1/videos/:id
 // @Access: Private
