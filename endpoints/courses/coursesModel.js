@@ -61,7 +61,8 @@ courseSchema.pre(/^find/, function (next) {
   });
   this.populate({
     path: "videos",
-    select: "video user tags likes viewed comments description isPaid price",
+    select:
+      "video user tags likes viewed shares comments description isPaid price",
   });
   this.populate({
     path: "chat",
