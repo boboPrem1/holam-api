@@ -10,7 +10,7 @@ const commentSchema = mongoose.Schema(
     },
     video: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "File",
+      ref: "Video",
       required: true,
       default: "000000000000000000000000",
     },
@@ -28,10 +28,10 @@ commentSchema.pre(/^find/, function (next) {
     path: "user",
     select: "_id username firstname lastname role complete_name phone",
   });
-  this.populate({
-    path: "video",
-    select: "user path",
-  });
+  // this.populate({
+  //   path: "video",
+  //   select: "user path",
+  // });
   next();
 });
 

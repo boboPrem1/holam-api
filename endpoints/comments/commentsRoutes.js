@@ -7,6 +7,7 @@ const {
   deleteComment,
   AddCommentToAVideo,
   RemoveCommentFromAVideo,
+  getAllVideoComments,
 } = require("./commentsController");
 
 router.route("/").get(getAllComments).post(createComment);
@@ -19,5 +20,6 @@ router
 
 router.route("/actions/add_comment/:id").post(AddCommentToAVideo);
 router.route("/actions/remove_comment/:id").delete(RemoveCommentFromAVideo);
+router.route("/actions/video_comments/:id").get(getAllVideoComments);
 
 module.exports = router;

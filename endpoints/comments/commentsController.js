@@ -215,6 +215,28 @@ exports.getCommentById = async (req, res) => {
   }
 };
 
+
+exports.getAllVideoComments = async (req, res) => {
+  try {
+    const userIn = await req.userIn();
+
+    // Build query conditionally based on user role
+    const query = {
+      video: req.params.id,
+    };
+
+    const comments = await Comment.find(query);
+
+    if (!comments.length) {
+      return res.status(404).json({ message: CustomUtils.consts.NOT_FOUND });
+    }
+
+    res.status(200).json(comments);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @Get comment by id
 // @Route: /api/v1/comments/:id
 // @Access: Public
