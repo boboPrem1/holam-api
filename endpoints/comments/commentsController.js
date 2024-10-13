@@ -159,6 +159,7 @@
 const Comment = require("./commentsModel.js");
 const Video = require("../videos/videosModel.js");
 const CustomUtils = require("../../utils/index.js");
+const { sendNotificationToClients } = require("../../socket.js");
 
 // @Get all comments
 // @Route: /api/v1/comments
@@ -215,9 +216,9 @@ exports.getCommentById = async (req, res) => {
   }
 };
 
-
 exports.getAllVideoComments = async (req, res) => {
   try {
+    sendNotificationToClients("All videos comments got ...");
     const userIn = await req.userIn();
 
     // Build query conditionally based on user role
@@ -227,9 +228,9 @@ exports.getAllVideoComments = async (req, res) => {
 
     const comments = await Comment.find(query);
 
-    if (!comments.length) {
-      return res.status(404).json({ message: CustomUtils.consts.NOT_FOUND });
-    }
+    // if (!comments.length) {
+    //   return res.status(404).json({ message: CustomUtils.consts.NOT_FOUND });
+    // }
 
     res.status(200).json(comments);
   } catch (error) {

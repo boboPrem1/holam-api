@@ -159,6 +159,7 @@
 const Course = require("./coursesModel.js");
 const CustomUtils = require("../../utils/index.js");
 const Chat = require("../chats/chatsModel.js");
+const { sendNotificationToClients } = require("../../index.js");
 
 // Helper function to check if the user has admin privileges
 const isAdmin = (userIn) => {
@@ -171,6 +172,7 @@ const isAdmin = (userIn) => {
 // @Route: /api/v1/courses
 // @Access: Public
 exports.getAllCourses = async (req, res) => {
+  // sendNotificationToClients("All courses got ...");
   let { limit = 10, page = 1, sort = {}, fields, _from } = req.query;
   limit = parseInt(limit, 10);
   let skip = null;

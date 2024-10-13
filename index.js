@@ -166,135 +166,52 @@
 // server.listen(PORT, () => console.log(`Serveur démarré sur le port ${PORT}`));
 // connection(URL_CONNECT_DEV);
 // // module.exports.io = io;
-
+const socketIo = require("socket.io");
 
 // Importer les modules requis
-const express = require("express");
-const cors = require("cors");
-const bodyParser = require("body-parser");
+
 const http = require("http");
 const dotenv = require("dotenv");
 const connection = require("./db");
-const multer = require("multer"); // Vous pouvez également configurer multer ici si nécessaire.
-
 // Charger les variables d'environnement
 dotenv.config();
 
 // Initialisation de l'application
-const app = express();
+// const app = express();
+const app = require("./app.js");
 const server = http.createServer(app);
+// const {initializeSocket} = require("./socket");
 
-// Variables d'environnement
-const PORT = process.env.SERVER_PORT || 4534;
-const API_URL_BASE = process.env.API_URL_BASE || "/";
-const URL_CONNECT_DEV = process.env.URL_CONNECT;
+const io = socketIo(server, {
+  cors: {
+    origin: "*", // Permet toutes les origines
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Méthodes autorisées
+    allowedHeaders: ["Content-Type"], // Headers autorisés
+    credentials: true, // Autorise l'envoi de cookies si nécessaire
+  },
+});
 
-// Importation des routes
-const userRoutes = require("./endpoints/users/userRoutes");
-const permissionRoutes = require("./endpoints/permissions/permissionsRoutes");
-const apiKeyRoutes = require("./endpoints/apiKeys/apiKeysRoutes");
-const profilRoutes = require("./endpoints/profil/profilRoutes");
-const userRolesRoutes = require("./endpoints/userRoles/userRoleRoutes");
-const userTypesRoutes = require("./endpoints/userTypes/userTypeRoutes");
-const authRoutes = require("./endpoints/auth/authRouter");
-const otpRoutes = require("./endpoints/otps/otpsRoutes");
-const countriesRoutes = require("./endpoints/countries/countriesRoutes");
-const citiesRoutes = require("./endpoints/cities/citiesRoutes");
-const favouritesCitiesRoutes = require("./endpoints/favourite_cities/favouritesCitiesRoutes.js");
-const filesRoutes = require("./endpoints/files/filesRoutes");
-const activitySubCategoryRoutes = require("./endpoints/activitySubCategories/activitySubCategoriesRoutes");
-const activityCategoryRoutes = require("./endpoints/activityCategories/activityCategoriesRoutes");
-const activityRoutes = require("./endpoints/activities/activitiesRoutes");
-const tagsRoutes = require("./endpoints/tags/tagsRoutes");
-const commentsRoutes = require("./endpoints/comments/commentsRoutes");
-const chatsRoutes = require("./endpoints/chats/chatsRoutes");
-const messagesRoutes = require("./endpoints/messages/messagesRoutes");
-const notificationsRoutes = require("./endpoints/notifications/notificationsRoutes");
-const videosRoutes = require("./endpoints/videos/videosRoutes");
-const forYouRoutes = require("./endpoints/videos/forYouRoutes");
-const coursesRoutes = require("./endpoints/courses/coursesRoutes");
-const paymentMeansRoutes = require("./endpoints/paymentMeans/paymentMeansRoutes");
-const transactionsRoutes = require("./endpoints/transactions/transactionsRoutes");
-const geolocationServicesRoutes = require("./endpoints/geolocationServices/geolocationServicesRoutes");
-const geolocationServiceMastersRoutes = require("./endpoints/geolocationServiceMasters/geolocationServiceMastersRoutes");
-const geolocationServiceAgentsRoutes = require("./endpoints/geolocationServiceAgents/geolocationServiceAgentsRoutes");
-const geolocationServiceClientsRoutes = require("./endpoints/geolocationServiceClients/geolocationServicesClientsRoutes");
-const geolocationServiceTransactionsRoutes = require("./endpoints/geolocationServiceTransactions/geolocationServiceTransactionsRoutes");
-const geolocationServicePointsRoutes = require("./endpoints/geolocationServicePoints/geolocationServicePointsRoutes");
-const geolocationServicePointsRoutesNeo = require("./endpoints/geolocationServicePoints/geolocationServicePointsRoutesNeo.js");
-const monitoringsRoutes = require("./endpoints/monitorings/monitoringsRoutes");
-const dashboardRoutes = require("./endpoints/tableauDeBord/dashboardRoutes");
-const uploadRoutes = require("./endpoints/uploads/uploadRoutes");
-
-const { protect, view_user } = require("./endpoints/auth/authController");
-
-// Middleware CORS
-app.use(cors());
-
-// Middleware Body-Parser pour traiter les requêtes JSON et URL-encoded
-app.use(bodyParser.json({ limit: "50mb" }));
-app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
-
-// Permettre l'accès aux fichiers statiques (images, etc.)
-app.use(express.static("public"));
-
-// Authentification et routes publiques
-app.use(API_URL_BASE, authRoutes);
-app.use(API_URL_BASE + "for_you", forYouRoutes);
-
-// Middleware pour la protection des routes (nécessite authentification)
-app.use(protect);
-app.use(view_user);
-
-// Routes protégées
-app.use(API_URL_BASE + "users", userRoutes);
-app.use(API_URL_BASE + "permissions", permissionRoutes);
-app.use(API_URL_BASE + "api_keys", apiKeyRoutes);
-app.use(API_URL_BASE + "profil", profilRoutes);
-app.use(API_URL_BASE + "user_roles", userRolesRoutes);
-app.use(API_URL_BASE + "otps", otpRoutes);
-app.use(API_URL_BASE + "countries", countriesRoutes);
-app.use(API_URL_BASE + "cities", citiesRoutes);
-app.use(API_URL_BASE + "fav_cities", favouritesCitiesRoutes);
-app.use(API_URL_BASE + "files", filesRoutes);
-app.use(API_URL_BASE + "activity_sub_categories", activitySubCategoryRoutes);
-app.use(API_URL_BASE + "activity_categories", activityCategoryRoutes);
-app.use(API_URL_BASE + "activities", activityRoutes);
-app.use(API_URL_BASE + "tags", tagsRoutes);
-app.use(API_URL_BASE + "comments", commentsRoutes);
-app.use(API_URL_BASE + "chats", chatsRoutes);
-app.use(API_URL_BASE + "messages", messagesRoutes);
-app.use(API_URL_BASE + "notifications", notificationsRoutes);
-app.use(API_URL_BASE + "videos", videosRoutes);
-app.use(API_URL_BASE + "courses", coursesRoutes);
-app.use(API_URL_BASE + "transactions", transactionsRoutes);
-app.use(API_URL_BASE + "payment_means", paymentMeansRoutes);
-app.use(API_URL_BASE + "geolocation_services", geolocationServicesRoutes);
-app.use(API_URL_BASE + "geolocation_service_masters", geolocationServiceMastersRoutes);
-app.use(API_URL_BASE + "geolocation_service_agents", geolocationServiceAgentsRoutes);
-app.use(API_URL_BASE + "geolocation_service_clients", geolocationServiceClientsRoutes);
-app.use(API_URL_BASE + "geolocation_service_transactions", geolocationServiceTransactionsRoutes);
-app.use(
-  API_URL_BASE + "geolocation_service_points",
-  geolocationServicePointsRoutes
-);
-app.use(
-  API_URL_BASE + "utils",
-  geolocationServicePointsRoutesNeo
-);
-app.use(API_URL_BASE + "monitorings", monitoringsRoutes);
-app.use(API_URL_BASE + "dashboard", dashboardRoutes);
-app.use(API_URL_BASE + "upload", uploadRoutes);
-
-// Route de test pour l'API
-app.get(API_URL_BASE, (req, res) => {
-  res.json({
-    message: "Bienvenue sur l'API de l'application Possible.Africa",
+io.on("connection", (socket) => {
+  console.log("connexion established", socket.id);
+  socket.on("emitToBack", (message) => {
+    console.log(message);
+    socket.emit("emitBackToBack", message + " Transmitted by the back server ...");
   });
 });
 
+function sendNotificationToClients(message) {
+  if (io) {
+    io.emit("notification", message);
+  }
+}
+
+const PORT = process.env.SERVER_PORT || 4534;
+
+const URL_CONNECT_DEV = process.env.URL_CONNECT;
 // Démarrage du serveur
 server.listen(PORT, () => {
   console.log(`Serveur démarré sur le port ${PORT}`);
   connection(URL_CONNECT_DEV); // Connexion à la base de données
 });
+
+module.exports = { sendNotificationToClients };
