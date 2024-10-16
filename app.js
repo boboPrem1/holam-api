@@ -42,6 +42,7 @@ const geolocationServicePointsRoutesNeo = require("./endpoints/geolocationServic
 const monitoringsRoutes = require("./endpoints/monitorings/monitoringsRoutes");
 const dashboardRoutes = require("./endpoints/tableauDeBord/dashboardRoutes");
 const uploadRoutes = require("./endpoints/uploads/uploadRoutes");
+const webhooksRoutes = require("./endpoints/transactions/transactionsWebhhoksRoutes");
 
 const { protect, view_user } = require("./endpoints/auth/authController");
 
@@ -58,6 +59,7 @@ app.use(express.static("public"));
 // Authentification et routes publiques
 app.use(API_URL_BASE, authRoutes);
 app.use(API_URL_BASE + "for_you", forYouRoutes);
+app.use(API_URL_BASE, webhooksRoutes);
 
 // Middleware pour la protection des routes (nécessite authentification)
 app.use(protect);
