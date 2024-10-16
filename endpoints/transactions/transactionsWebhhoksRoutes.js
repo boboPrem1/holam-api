@@ -15,7 +15,6 @@ router.route("/webhook").post((req, res) => {
     response.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-    // Handle the event
   switch (event.name) {
     case 'transaction.created':
       // Transaction créée
