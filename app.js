@@ -1,3 +1,8 @@
+const { Webhook } = require("fedapay");
+require("dotenv").config();
+
+const ENDPOINT_SECRET = process.env.FEDA_PAY_WEBHOOK_SECRET;
+
 const cors = require("cors");
 const bodyParser = require("body-parser");
 
@@ -42,7 +47,6 @@ const geolocationServicePointsRoutesNeo = require("./endpoints/geolocationServic
 const monitoringsRoutes = require("./endpoints/monitorings/monitoringsRoutes");
 const dashboardRoutes = require("./endpoints/tableauDeBord/dashboardRoutes");
 const uploadRoutes = require("./endpoints/uploads/uploadRoutes");
-const webhooksRoutes = require("./endpoints/transactions/transactionsWebhhoksRoutes");
 
 const { protect, view_user } = require("./endpoints/auth/authController");
 
@@ -59,7 +63,6 @@ app.use(express.static("public"));
 // Authentification et routes publiques
 app.use(API_URL_BASE, authRoutes);
 app.use(API_URL_BASE + "for_you", forYouRoutes);
-app.use(API_URL_BASE, webhooksRoutes);
 
 // Middleware pour la protection des routes (nécessite authentification)
 app.use(protect);
@@ -118,6 +121,40 @@ app.use(API_URL_BASE + "upload", uploadRoutes);
 app.get(API_URL_BASE, (req, res) => {
   res.json({
     message: "Bienvenue sur l'API de l'application Possible.Africa",
+  });
+});
+
+app.post(API_URL_BASE + "/webhook", (req, res) => {
+  const sig = req.headers["x-fedapay-signature"];
+
+  let event;
+
+  try {
+    event = Webhook.constructEvent(request.body, sig, ENDPOINT_SECRET);
+  } catch (err) {
+    response.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  switch (event.name) {
+    case "transaction.created":
+      // Transaction créée
+      break;
+    case "transaction.approved":
+      // Transaction approuvée
+      break;
+    case "transaction.canceled":
+      // Transaction annulée
+      break;
+    default:
+      console.log(`Unhandled event type ${event.type}`);
+  }
+
+  console.log(req.body);
+  console.log(event);
+
+  res.status(200).send({
+    event,
+    body: req.body,
   });
 });
 
