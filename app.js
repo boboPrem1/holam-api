@@ -61,6 +61,46 @@ app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
 app.use(express.static("public"));
 
 // Authentification et routes publiques
+// Route de test pour l'API
+app.get(API_URL_BASE, (req, res) => {
+  res.json({
+    message: "Bienvenue sur l'API de l'application Possible.Africa",
+  });
+});
+
+app.post(API_URL_BASE + "/webhook", (req, res) => {
+  const sig = req.headers["x-fedapay-signature"];
+
+  let event;
+
+  try {
+    event = Webhook.constructEvent(request.body, sig, ENDPOINT_SECRET);
+  } catch (err) {
+    response.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  switch (event.name) {
+    case "transaction.created":
+      // Transaction créée
+      break;
+    case "transaction.approved":
+      // Transaction approuvée
+      break;
+    case "transaction.canceled":
+      // Transaction annulée
+      break;
+    default:
+      console.log(`Unhandled event type ${event.type}`);
+  }
+
+  console.log(req.body);
+  console.log(event);
+
+  res.status(200).send({
+    event,
+    body: req.body,
+  });
+});
 app.use(API_URL_BASE, authRoutes);
 app.use(API_URL_BASE + "for_you", forYouRoutes);
 
@@ -117,45 +157,6 @@ app.use(API_URL_BASE + "monitorings", monitoringsRoutes);
 app.use(API_URL_BASE + "dashboard", dashboardRoutes);
 app.use(API_URL_BASE + "upload", uploadRoutes);
 
-// Route de test pour l'API
-app.get(API_URL_BASE, (req, res) => {
-  res.json({
-    message: "Bienvenue sur l'API de l'application Possible.Africa",
-  });
-});
 
-app.post(API_URL_BASE + "/webhook", (req, res) => {
-  const sig = req.headers["x-fedapay-signature"];
-
-  let event;
-
-  try {
-    event = Webhook.constructEvent(request.body, sig, ENDPOINT_SECRET);
-  } catch (err) {
-    response.status(400).send(`Webhook Error: ${err.message}`);
-  }
-
-  switch (event.name) {
-    case "transaction.created":
-      // Transaction créée
-      break;
-    case "transaction.approved":
-      // Transaction approuvée
-      break;
-    case "transaction.canceled":
-      // Transaction annulée
-      break;
-    default:
-      console.log(`Unhandled event type ${event.type}`);
-  }
-
-  console.log(req.body);
-  console.log(event);
-
-  res.status(200).send({
-    event,
-    body: req.body,
-  });
-});
 
 module.exports = app;
