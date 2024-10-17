@@ -40,6 +40,9 @@ const notificationSchema = mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    seenAt: {
+      type: Date,
+    },
   },
   {
     timestamps: true,

@@ -228,11 +228,10 @@ exports.getMessageById = async (req, res) => {
 exports.createMessage = async (req, res) => {
   try {
     const CustomBody = { ...req.body };
-    const slug = CustomUtils.slugify(CustomBody.name);
     const userIn = await req.userIn();
 
     CustomBody.user = userIn._id;
-    CustomBody.slug = slug;
+    CustomBody.sender = userIn._id;
 
     const message = await Message.create(CustomBody);
 
@@ -273,6 +272,68 @@ exports.updateMessage = async (req, res) => {
     res.status(500).json({ status: "fail", message: error.message });
   }
 };
+
+exports.updateMessageReadBy = async (req, res) => {
+  try {
+    const userIn = await req.userIn();
+
+    const messages = req.body.messages;
+
+    if (!messages.length)
+      return res.status(400).json({ message: "No messages sent!" });
+
+    for (const message of messages) {
+      const element = array[i];
+      await Message.findByIdAndUpdate(
+        message,
+        {
+          $push: {
+            readBy: userIn._id,
+          },
+        },
+        {
+          new: true,
+        }
+      );
+    }
+
+    res.status(200).json({message: "success"});
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+// exports.updateReadByBulk = async (req, res) => {
+//   try {
+//     const userIn = await req.userIn();
+
+//     let message = await Message.findOne({
+//       _id: req.params.id,
+//       ...(userIn.role.slug !== "super-administrateur" &&
+//         userIn.role.slug !== "admin" && { user: userIn._id }),
+//     });
+
+//     if (!message) {
+//       return res.status(404).json({ message: "Message not found!" });
+//     }
+
+//     const updatedMessage = await Message.findByIdAndUpdate(
+//       req.params.id,
+//       {
+//         readBy: [
+//           ...
+//         ]
+//       },
+//       {
+//         new: true,
+//         runValidators: true,
+//       }
+//     );
+
+//     res.status(200).json(updatedMessage);
+//   } catch (error) {
+//     res.status(500).json({ status: "fail", message: error.message });
+//   }
+// };
 
 // @Delete message by id
 // @Route: /api/v1/messages/:id

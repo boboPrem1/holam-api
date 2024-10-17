@@ -163,7 +163,11 @@
 
 const Notification = require("./notificationsModel.js");
 const CustomUtils = require("../../utils/index.js");
+const { messaging } = require("firebase-admin");
 
+require("dotenv").config();
+
+const FIREBASE_REGISTRATION_TOKEN = process.env.FIREBASE_REGISTRATION_TOKEN;
 // @Get all notifications
 // @Route: /api/v1/notifications
 // @Access: Public
@@ -240,9 +244,128 @@ exports.createNotification = async (req, res) => {
   CustomBody.user = userIn._id;
   CustomBody.slug = slug;
 
+  if (!userIn.firebase_registration_token) {
+    console.log({
+      message: "Firebase registration token not set",
+    });
+  }
+  
   try {
     const notification = await Notification.create(CustomBody);
+    // Start firebase sending
+
+    const message = {
+      data: {
+        message: CustomBody.description,
+      },
+      token: userIn.firebase_registration_token,
+    };
+
+    // Send a message to the device corresponding to the provided
+    // registration token.
+    messaging()
+      .send(message)
+      .then((response) => {
+        // Response is a message ID string.
+        console.log("Successfully sent message:", response);
+      })
+      .catch((error) => {
+        console.log("Error sending message:", error);
+      });
+    // End firebase sending
     res.status(201).json(notification);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+exports.sendMulticastNotification = async (req, res) => {
+  try {
+    // Create a list containing up to 500 registration tokens.
+    // These registration tokens come from the client FCM SDKs.
+    const registrationTokens = [
+      "YOUR_REGISTRATION_TOKEN_1",
+      // …
+      "YOUR_REGISTRATION_TOKEN_N",
+    ];
+
+    const message = {
+      data: { score: "850", time: "2:45" },
+      tokens: registrationTokens,
+    };
+
+    messaging()
+      .sendMulticast(message)
+      .then((response) => {
+        console.log(response.successCount + " messages were sent successfully");
+      });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+exports.sendNotificationToAndroid = async (req, res) => {
+  try {
+    const topicName = "industry-tech";
+
+    const message = {
+      notification: {
+        title: "`$FooCorp` up 1.43% on the day",
+        body: "FooCorp gained 11.80 points to close at 835.67, up 1.43% on the day.",
+      },
+      android: {
+        notification: {
+          icon: "stock_ticker_update",
+          color: "#7e55c3",
+        },
+      },
+      topic: topicName,
+    };
+
+    messaging()
+      .send(message)
+      .then((response) => {
+        // Response is a message ID string.
+        console.log("Successfully sent message:", response);
+      })
+      .catch((error) => {
+        console.log("Error sending message:", error);
+      });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+exports.sendNotificationToIos = async (req, res) => {
+  try {
+    const { topicName, title, imageSrc: image } = req.body;
+
+    const message = {
+      notification: {
+        title,
+      },
+      apns: {
+        payload: {
+          aps: {
+            "mutable-content": 1,
+          },
+        },
+        fcm_options: {
+          image,
+        },
+      },
+      topic: topicName,
+    };
+
+    messaging()
+      .send(message)
+      .then((response) => {
+        // Response is a message ID string.
+        console.log("Successfully sent message:", response);
+      })
+      .catch((error) => {
+        console.log("Error sending message:", error);
+      });
   } catch (error) {
     res.status(400).json({ message: error.message });
   }

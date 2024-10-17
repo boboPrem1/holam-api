@@ -174,14 +174,8 @@ app.use(
   API_URL_BASE + "geolocation_service_points",
   geolocationServicePointsRoutes
 );
-app.use(
-  API_URL_BASE + "monitorings",
-  monitoringsRoutes
-);
-app.use(
-  API_URL_BASE + "dashboard",
-  dashboardRoutes
-);
+app.use(API_URL_BASE + "monitorings", monitoringsRoutes);
+app.use(API_URL_BASE + "dashboard", dashboardRoutes);
 app.use(API_URL_BASE + "upload", uploadRoutes);
 
 // // Routes
@@ -233,7 +227,34 @@ io.on("connection", (socket) => {
   console.log("connexion established", socket.id);
   socket.on("emitToBack", (message) => {
     console.log(message);
-    socket.emit("emitBackToBack", message + " Transmitted by the back server ...");
+    socket.emit(
+      "emitBackToBack",
+      message + " Transmitted by the back server ..."
+    );
+  });
+
+  // Chat debut
+  // Joindre un utilisateur à un groupe de chat spécifique
+  socket.on("joinRoom", (room) => {
+    socket.join(room);
+    console.log(`Utilisateur ${socket.id} a rejoint la salle: ${room}`);
+  });
+
+  // Envoyer un message à un groupe spécifique
+  socket.on("sendMessageToRoom", ({ room, message }) => {
+    io.to(room).emit("message", message);
+  });
+
+  // Envoyer un message à un utilisateur spécifique (privé)
+  socket.on("sendMessageToUser", ({ userId, message }) => {
+    io.to(userId).emit("privateMessage", message);
+  });
+
+  // Chat fin
+
+  // Événement de déconnexion
+  socket.on("disconnect", () => {
+    console.log(`Utilisateur déconnecté: ${socket.id}`);
   });
 });
 

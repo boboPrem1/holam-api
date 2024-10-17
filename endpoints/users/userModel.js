@@ -131,6 +131,10 @@ const userSchema = mongoose.Schema(
       type: String,
       default: "",
     },
+    firebase_registration_token: {
+      type: String,
+      default: "",
+    },
     user: {
       type: String,
       ref: "User",
