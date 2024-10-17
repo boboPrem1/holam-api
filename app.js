@@ -11,6 +11,7 @@ const app = express();
 // Variables d'environnement
 const API_URL_BASE = process.env.API_URL_BASE || "/";
 
+
 // Importation des routes
 const userRoutes = require("./endpoints/users/userRoutes");
 const permissionRoutes = require("./endpoints/permissions/permissionsRoutes");
