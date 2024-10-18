@@ -254,6 +254,73 @@ exports.getAllMessages = async (req, res, next) => {
   }
 };
 
+exports.getAllChatMessages = async (req, res, next) => {
+  try {
+    // Extraction et paramétrage des variables à partir des paramètres de requête
+    let {
+      limit = 10,
+      page = 1,
+      sort = "-createdAt",
+      fields,
+      _from,
+    } = req.query;
+
+    // Conversion en entier de limit et page
+    limit = parseInt(limit, 10);
+    page = parseInt(page, 10);
+
+    // Calcul du "skip" pour la pagination (sauter un nombre d'enregistrements)
+    let skip = (page - 1) * limit;
+
+    // Si le paramètre `_from` est présent, ignorer la limite et le skip (pas de pagination)
+    if (_from) {
+      limit = null;
+      skip = null;
+    }
+
+    // Génération de l'objet de requête en fonction des filtres avancés
+    let queryObj = CustomUtils.advancedQuery(req.query);
+
+    // Récupération de l'utilisateur connecté
+    const userIn = await req.userIn();
+
+    // Si l'utilisateur n'est ni un administrateur ni un super-administrateur, filtrer par son ID
+    if (
+      !(
+        userIn.role.slug === "super-administrateur" ||
+        userIn.role.slug === "admin"
+      )
+    ) {
+      queryObj.user = userIn._id;
+    }
+
+    const chatId = req.params.id;
+
+    if (!chatId)
+      return res
+        .status(400)
+        .json({ message: "You must precise a valid chat Id." });
+
+    queryObj = {
+      ...queryObj,
+      chat: chatId,
+    };
+
+    // Requête pour récupérer les messages avec filtres, pagination et tri
+    const messages = await Message.find(queryObj)
+      .limit(limit) // Appliquer la limite si elle existe
+      .skip(skip) // Sauter des résultats pour la pagination
+      .sort(sort) // Appliquer le tri
+      .select(fields ? fields.split(",").join(" ") : "-__v"); // Sélectionner des champs spécifiques
+
+    // Réponse avec les messages récupérés
+    res.status(200).json(messages);
+  } catch (error) {
+    // Gestion des erreurs
+    res.status(500).json({ status: "fail", message: error.message });
+  }
+};
+
 // @Get message by id
 // @Route: /api/v1/messages/:id
 // @Access: Public
