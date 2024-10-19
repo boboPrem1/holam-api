@@ -285,14 +285,14 @@ exports.getAllChatMessages = async (req, res, next) => {
     const userIn = await req.userIn();
 
     // Si l'utilisateur n'est ni un administrateur ni un super-administrateur, filtrer par son ID
-    if (
-      !(
-        userIn.role.slug === "super-administrateur" ||
-        userIn.role.slug === "admin"
-      )
-    ) {
-      queryObj.user = userIn._id;
-    }
+    // if (
+    //   !(
+    //     userIn.role.slug === "super-administrateur" ||
+    //     userIn.role.slug === "admin"
+    //   )
+    // ) {
+    //   queryObj.user = userIn._id;
+    // }
 
     const chatId = req.params.id;
 
