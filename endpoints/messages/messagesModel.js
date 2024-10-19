@@ -55,7 +55,7 @@ messageSchema.pre(/^find/, function (next) {
   });
   this.populate({
     path: "sender",
-    select: "username role",
+    select: "_id username firstname lastname role complete_name phone",
   });
   this.populate({
     path: "user",
