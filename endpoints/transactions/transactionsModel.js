@@ -41,12 +41,12 @@ const transactionSchema = mongoose.Schema(
     paidAt: {
       type: Date,
     },
-    videoPaid: {
+    videoInPaid: {
       type: mongoose.Schema.Types.ObjectId,
       default: "000000000000000000000000",
       ref: "Video",
     },
-    coursePaid: {
+    courseInPaid: {
       type: mongoose.Schema.Types.ObjectId,
       default: "000000000000000000000000",
       ref: "Course",
@@ -73,11 +73,11 @@ transactionSchema.pre(/^find/, function (next) {
     select: "_id username firstname lastname role complete_name phone",
   });
   this.populate({
-    path: "videoPaid",
+    path: "videoInPaid",
     select: "description video thumbnail",
   });
   this.populate({
-    path: "coursePaid",
+    path: "courseInPaid",
     select: "title creator",
   });
   this.populate({

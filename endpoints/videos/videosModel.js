@@ -45,6 +45,11 @@ const videoSchema = mongoose.Schema(
       type: Number,
       default: 0,
     },
+    paidBy: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "User",
+      default: "000000000000000000000000",
+    },
     isPaid: {
       type: Boolean,
       default: false,
@@ -66,6 +71,10 @@ videoSchema.pre(/^find/, function (next) {
     path: "user",
     select: "_id username firstname lastname role complete_name phone",
   });
+  // this.populate({
+  //   path: "paidBy",
+  //   select: "_id username firstname lastname role complete_name phone",
+  // });
   this.populate({
     path: "likes",
     select: "_id role",

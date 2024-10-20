@@ -310,6 +310,9 @@ const {
   Balance,
 } = require("fedapay");
 const User = require("../users/userModel.js");
+const Video = require("../videos/videosModel.js");
+const Course = require("../courses/coursesModel.js");
+const Chat = require("../chats/chatsModel.js");
 require("dotenv").config();
 
 const FEDA_API_SECRET = process.env.FEDA_PAY_API_SECRET;
@@ -391,16 +394,38 @@ exports.getTransactionById = async (req, res) => {
 
 // Helper function to handle FedaPay transaction
 async function handleFedaPayTransaction(transaction, fedaPayTransaction, user) {
+  const userIn = user;
   if (fedaPayTransaction.status === "approved") {
-    const amount = fedaPayTransaction.amount_transferred;
+    let amount = fedaPayTransaction.amount_transferred;
     const updateBalance =
-      fedaPayTransaction.description === "deposit" ? amount : -amount;
+      fedaPayTransaction.description === "deposit" ? amount : (amount = 0);
 
-    await User.findByIdAndUpdate(
-      user._id,
-      { $inc: { balance: updateBalance } },
-      { new: true }
-    );
+    if (fedaPayTransaction.description === "video_paid") {
+      await Video.findByIdAndUpdate(transaction.videoInPaid, {
+        $push: {
+          paidBy: userIn._id,
+        },
+      });
+    }
+    if (fedaPayTransaction.description === "course_paid") {
+      const course = await Course.findByIdAndUpdate(transaction.courseInPaid, {
+        $push: {
+          learners: userIn._id,
+        },
+      });
+
+      await Chat.findByIdAndUpdate(course.chat, {
+        $push: {
+          members: userIn._id,
+        },
+      });
+    }
+    if (amount)
+      await User.findByIdAndUpdate(
+        user._id,
+        { $inc: { balance: updateBalance } },
+        { new: true }
+      );
 
     transaction = await Transaction.findByIdAndUpdate(
       transaction._id,
@@ -417,6 +442,7 @@ async function handleFedaPayTransaction(transaction, fedaPayTransaction, user) {
       { new: true }
     );
   }
+
   return transaction;
 }
 
@@ -431,9 +457,39 @@ exports.createTransaction = async (req, res) => {
     return res.status(400).json({ message: CustomUtils.consts.MISSING_DATA });
   }
 
-  const paymentPayload = createPaymentPayload(CustomBody, user);
+  if (
+    CustomBody.type === "deposit" &&
+    (!CustomBody.amount || !CustomBody.amount < 100)
+  ) {
+    return res.status(400).json({
+      message: CustomUtils.consts.MISSING_DATA,
+    });
+  }
 
   try {
+    
+  if (CustomBody.type === "video_paid") {
+    const videoInPaid = await Video.findById(CustomBody.video);
+
+    if (!videoInPaid)
+      return res.status(400).json({ message: CustomUtils.consts.MISSING_DATA });
+
+    CustomBody.amount = videoInPaid.price;
+    CustomBody.videoInPaid = videoInPaid._id;
+  }
+
+  if (CustomBody.type === "course_paid") {
+    const courseInPaid = await Course.findById(CustomBody.course);
+
+    if (!courseInPaid)
+      return res.status(400).json({ message: CustomUtils.consts.MISSING_DATA });
+
+    CustomBody.amount = courseInPaid.price;
+    CustomBody.courseInPaid = courseInPaid._id;
+  }
+
+  const paymentPayload = createPaymentPayload(CustomBody, user);
+
     const fedaPayTransaction = await FedaPayTransaction.create(paymentPayload);
     const token = await fedaPayTransaction.generateToken();
 
@@ -452,6 +508,81 @@ exports.createTransaction = async (req, res) => {
 
     const transaction = await Transaction.create(CustomBody);
     res.status(201).json(transaction);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error creating transaction", error: error.message });
+  }
+};
+
+exports.createBalanceTransaction = async (req, res) => {
+  const CustomBody = { ...req.body };
+  const user = await req.userIn();
+
+  if (CustomBody.amount && !CustomBody.amount < user.balance) {
+    return res.status(400).json({
+      message: "Insufficient balance",
+    });
+  }
+
+  try {
+    if (CustomBody.type === "video_paid") {
+      const videoInPaid = await Video.findById(CustomBody.video);
+
+      if (!videoInPaid)
+        return res
+          .status(400)
+          .json({ message: CustomUtils.consts.MISSING_DATA });
+
+      CustomBody.amount = videoInPaid.price;
+      CustomBody.videoInPaid = videoInPaid._id;
+      await Video.findByIdAndUpdate(videoInPaid._id, {
+        $push: {
+          paidBy: user._id,
+        },
+      });
+
+      CustomBody.user = user._id;
+      const nownow = new Date();
+      CustomBody.status = `Processed at ${nownow.toLocaleString("fr-FR", {
+        timeZone: "UTC",
+      })}`;
+      const transaction = await Transaction.create(CustomBody);
+      return res.status(201).json(transaction);
+    }
+
+    if (CustomBody.type === "course_paid") {
+      const courseInPaid = await Course.findById(CustomBody.course);
+
+      if (!courseInPaid)
+        return res
+          .status(400)
+          .json({ message: CustomUtils.consts.MISSING_DATA });
+
+      CustomBody.amount = courseInPaid.price;
+      CustomBody.courseInPaid = courseInPaid._id;
+
+      const course = await Course.findByIdAndUpdate(courseInPaid._id, {
+        $push: {
+          learners: user._id,
+        },
+      });
+
+      await Chat.findByIdAndUpdate(course.chat, {
+        $push: {
+          members: user._id,
+        },
+      });
+
+      CustomBody.user = user._id;
+      const nownownow = new Date();
+      CustomBody.status = `Processed at ${nownownow.toLocaleString("fr-FR", {
+        timeZone: "UTC",
+      })}`;
+
+      const transaction = await Transaction.create(CustomBody);
+      return res.status(201).json(transaction);
+    }
   } catch (error) {
     res
       .status(500)
@@ -480,6 +611,158 @@ function createPaymentPayload(CustomBody, user) {
   };
   return paymentPayload;
 }
+
+exports.depositTransaction = async (req, res) => {
+  const CustomBody = { ...req.body };
+  const user = await req.userIn();
+
+  if (!user.firstname || !user.lastname || !user.email || !user.phone?.number) {
+    return res.status(400).json({
+      message:
+        "You must update your personnal informations in order to do transactions on HOLAM",
+    });
+  }
+
+  if (!CustomBody.amount || !CustomBody.amount < 100) {
+    return res.status(400).json({
+      message: CustomUtils.consts.MISSING_DATA,
+    });
+  }
+
+  const paymentPayload = createPaymentPayload(CustomBody, user);
+
+  try {
+    const fedaPayTransaction = await FedaPayTransaction.create(paymentPayload);
+    const token = await fedaPayTransaction.generateToken();
+
+    CustomBody.type = "deposit";
+    CustomBody.status = fedaPayTransaction.status;
+    CustomBody.fedaPaymentRef = fedaPayTransaction.reference;
+    CustomBody.fedaPaymentId = fedaPayTransaction.id;
+    CustomBody.paymentUrl = token.url;
+    CustomBody.paymentToken = token.token;
+    CustomBody.user = user._id;
+
+    if (!user.fedaPayCustomerId) {
+      await User.findByIdAndUpdate(user._id, {
+        fedaPayCustomerId: fedaPayTransaction.customer_id,
+      });
+    }
+
+    const transaction = await Transaction.create(CustomBody);
+    res.status(201).json(transaction);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error creating transaction", error: error.message });
+  }
+};
+
+exports.videoPaidTransaction = async (req, res) => {
+  const CustomBody = { ...req.body };
+  const user = await req.userIn();
+
+  if (!user.firstname || !user.lastname || !user.email || !user.phone?.number) {
+    return res.status(400).json({
+      message:
+        "You must update your personnal informations in order to do transactions on HOLAM",
+    });
+  }
+
+  if (
+    !CustomBody.amount ||
+    !CustomBody.amount < 100 ||
+    !CustomBody.video_paid
+  ) {
+    return res.status(400).json({
+      message: CustomUtils.consts.MISSING_DATA,
+    });
+  }
+
+  const paymentPayload = createPaymentPayload(CustomBody, user);
+
+  try {
+    const fedaPayTransaction = await FedaPayTransaction.create(paymentPayload);
+    const token = await fedaPayTransaction.generateToken();
+
+    CustomBody.type = "deposit";
+    CustomBody.status = fedaPayTransaction.status;
+    CustomBody.fedaPaymentRef = fedaPayTransaction.reference;
+    CustomBody.fedaPaymentId = fedaPayTransaction.id;
+    CustomBody.paymentUrl = token.url;
+    CustomBody.paymentToken = token.token;
+    CustomBody.user = user._id;
+
+    if (!user.fedaPayCustomerId) {
+      await User.findByIdAndUpdate(user._id, {
+        fedaPayCustomerId: fedaPayTransaction.customer_id,
+      });
+    }
+
+    const transaction = await Transaction.create(CustomBody);
+    res.status(201).json(transaction);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error creating transaction", error: error.message });
+  }
+};
+
+exports.coursePaidTransaction = async (req, res) => {
+  const CustomBody = { ...req.body };
+  const user = await req.userIn();
+
+  if (!user.firstname || !user.lastname || !user.email || !user.phone?.number) {
+    return res.status(400).json({
+      message:
+        "You must update your personnal informations in order to do transactions on HOLAM",
+    });
+  }
+
+  if (
+    !CustomBody.amount ||
+    !CustomBody.amount < 100 ||
+    !CustomBody.courseInPaid
+  ) {
+    return res.status(400).json({
+      message: CustomUtils.consts.MISSING_DATA,
+    });
+  }
+
+  const paymentPayload = createPaymentPayload(CustomBody, user);
+
+  try {
+    const fedaPayTransaction = await FedaPayTransaction.create(paymentPayload);
+    const token = await fedaPayTransaction.generateToken();
+
+    CustomBody.type = "deposit";
+    CustomBody.status = fedaPayTransaction.status;
+    CustomBody.fedaPaymentRef = fedaPayTransaction.reference;
+    CustomBody.fedaPaymentId = fedaPayTransaction.id;
+    CustomBody.paymentUrl = token.url;
+    CustomBody.paymentToken = token.token;
+    CustomBody.user = user._id;
+
+    if (!user.fedaPayCustomerId) {
+      await User.findByIdAndUpdate(user._id, {
+        fedaPayCustomerId: fedaPayTransaction.customer_id,
+      });
+    }
+
+    const transaction = await Transaction.create(CustomBody);
+    res.status(201).json(transaction);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error creating transaction", error: error.message });
+  }
+};
+
+exports.checkTransaction = async (req, res) => {
+  try {
+    const transaction_id = req.params.id;
+  } catch (error) {}
+};
 
 // @Update transaction by id
 // @Route: /api/v1/transactions/:id
