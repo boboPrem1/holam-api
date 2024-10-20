@@ -12,7 +12,7 @@ const {
 
 router.route("/").get(getAllTransactions).post(createTransaction);
 
-router.route("/callback").get(paymentCallback);
+// router.route("/callback").get(paymentCallback);
 
 router
   .route("/:id")
@@ -20,6 +20,6 @@ router
   .put(updateTransaction)
   .delete(deleteTransaction);
 
-router.route("/actions/balance_transaction/:id").post(createBalanceTransaction);
+router.route("/actions/balance_transactions").post(createBalanceTransaction);
 
 module.exports = router;
