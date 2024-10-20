@@ -467,28 +467,31 @@ exports.createTransaction = async (req, res) => {
   }
 
   try {
-    
-  if (CustomBody.type === "video_paid") {
-    const videoInPaid = await Video.findById(CustomBody.video);
+    if (CustomBody.type === "video_paid") {
+      const videoInPaid = await Video.findById(CustomBody.video);
 
-    if (!videoInPaid)
-      return res.status(400).json({ message: CustomUtils.consts.MISSING_DATA });
+      if (!videoInPaid)
+        return res
+          .status(400)
+          .json({ message: CustomUtils.consts.MISSING_DATA });
 
-    CustomBody.amount = videoInPaid.price;
-    CustomBody.videoInPaid = videoInPaid._id;
-  }
+      CustomBody.amount = videoInPaid.price;
+      CustomBody.videoInPaid = videoInPaid._id;
+    }
 
-  if (CustomBody.type === "course_paid") {
-    const courseInPaid = await Course.findById(CustomBody.course);
+    if (CustomBody.type === "course_paid") {
+      const courseInPaid = await Course.findById(CustomBody.course);
 
-    if (!courseInPaid)
-      return res.status(400).json({ message: CustomUtils.consts.MISSING_DATA });
+      if (!courseInPaid)
+        return res
+          .status(400)
+          .json({ message: CustomUtils.consts.MISSING_DATA });
 
-    CustomBody.amount = courseInPaid.price;
-    CustomBody.courseInPaid = courseInPaid._id;
-  }
+      CustomBody.amount = courseInPaid.price;
+      CustomBody.courseInPaid = courseInPaid._id;
+    }
 
-  const paymentPayload = createPaymentPayload(CustomBody, user);
+    const paymentPayload = createPaymentPayload(CustomBody, user);
 
     const fedaPayTransaction = await FedaPayTransaction.create(paymentPayload);
     const token = await fedaPayTransaction.generateToken();
@@ -542,6 +545,10 @@ exports.createBalanceTransaction = async (req, res) => {
         },
       });
 
+      await User.findByIdAndUpdate(videoInPaid._id, {
+        balance: Number(user.balance) - videoInPaid.price,
+      });
+
       CustomBody.user = user._id;
       const nownow = new Date();
       CustomBody.status = `Processed at ${nownow.toLocaleString("fr-FR", {
@@ -572,6 +579,10 @@ exports.createBalanceTransaction = async (req, res) => {
         $push: {
           members: user._id,
         },
+      });
+
+      await User.findByIdAndUpdate(videoInPaid._id, {
+        balance: Number(user.balance) - courseInPaid.price,
       });
 
       CustomBody.user = user._id;
