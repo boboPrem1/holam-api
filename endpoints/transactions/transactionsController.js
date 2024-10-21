@@ -414,6 +414,12 @@ async function handleFedaPayTransaction(transaction, fedaPayTransaction, user) {
         },
       });
 
+      await Course.findByIdAndUpdate(transaction.courseInPaid, {
+        $push: {
+          paidBy: userIn._id,
+        },
+      });
+
       await Chat.findByIdAndUpdate(course.chat, {
         $push: {
           members: userIn._id,

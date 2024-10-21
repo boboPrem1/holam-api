@@ -38,6 +38,11 @@ const courseSchema = mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    paidBy: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "User",
+      default: "000000000000000000000000",
+    },
     price: {
       type: Number,
       default: false,
