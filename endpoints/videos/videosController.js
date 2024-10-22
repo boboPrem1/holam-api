@@ -287,6 +287,25 @@ exports.AddLikeToAVideo = async (req, res) => {
     };
 
     const video = await Video.findOne(query);
+    const videoAlreadyExist = await Video.findOne({
+      _id: req.params.id,
+      likes: {
+        $in: userIn._id,
+      },
+    });
+
+    if (videoAlreadyExist) {
+      const updated = await Video.findByIdAndUpdate(
+        video._id,
+        {
+          $pull: { likes: userIn._id },
+        },
+        {
+          new: true,
+        }
+      );
+      return res.status(200).json(updated);
+    }
 
     if (!video) {
       return res.status(404).json({ message: CustomUtils.consts.NOT_FOUND });

@@ -14,7 +14,7 @@ router.route("/").get(getAllVideos).post(createVideo);
 
 router.route("/:id").get(getVideoById).put(updateVideo).delete(deleteVideo);
 
-router.route("/actions/like/:id").post(AddLikeToAVideo);
+router.route("/actions/like_dislike/:id").post(AddLikeToAVideo);
 router.route("/actions/view/:id").post(ViewAVideo);
 router.route("/actions/dislike/:id").post(RemoveLikeFromAVideo);
 
