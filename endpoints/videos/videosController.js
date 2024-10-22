@@ -296,7 +296,7 @@ exports.AddLikeToAVideo = async (req, res) => {
 
     if (videoAlreadyExist) {
       const updated = await Video.findByIdAndUpdate(
-        video._id,
+        videoAlreadyExist._id,
         {
           $pull: { likes: userIn._id },
         },
