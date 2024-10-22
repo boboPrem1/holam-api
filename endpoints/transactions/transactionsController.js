@@ -607,6 +607,159 @@ exports.createBalanceTransaction = async (req, res) => {
   }
 };
 
+
+exports.testCreateTransaction = async (req, res) => {
+  const CustomBody = { ...req.body };
+  const user = await req.userIn();
+
+  if (!user.firstname || !user.lastname || !user.email || !user.phone?.number) {
+    return res.status(400).json({ message: CustomUtils.consts.MISSING_DATA });
+  }
+
+  if (
+    CustomBody.type === "deposit" &&
+    (!CustomBody.amount || !CustomBody.amount < 100)
+  ) {
+    return res.status(400).json({
+      message: CustomUtils.consts.MISSING_DATA,
+    });
+  }
+
+  try {
+    if (CustomBody.type === "video_paid") {
+      const videoInPaid = await Video.findById(CustomBody.video);
+
+      if (!videoInPaid)
+        return res
+          .status(400)
+          .json({ message: CustomUtils.consts.MISSING_DATA });
+
+      CustomBody.amount = videoInPaid.price;
+      CustomBody.videoInPaid = videoInPaid._id;
+    }
+
+    if (CustomBody.type === "course_paid") {
+      const courseInPaid = await Course.findById(CustomBody.course);
+
+      if (!courseInPaid)
+        return res
+          .status(400)
+          .json({ message: CustomUtils.consts.MISSING_DATA });
+
+      CustomBody.amount = courseInPaid.price;
+      CustomBody.courseInPaid = courseInPaid._id;
+    }
+
+    const paymentPayload = testCreatePaymentPayload(CustomBody, user);
+
+    const fedaPayTransaction = await FedaPayTransaction.create(paymentPayload);
+    const token = await fedaPayTransaction.generateToken();
+
+    CustomBody.status = fedaPayTransaction.status;
+    CustomBody.fedaPaymentRef = fedaPayTransaction.reference;
+    CustomBody.fedaPaymentId = fedaPayTransaction.id;
+    CustomBody.paymentUrl = token.url;
+    CustomBody.paymentToken = token.token;
+    CustomBody.user = user._id;
+
+    if (!user.fedaPayCustomerId) {
+      await User.findByIdAndUpdate(user._id, {
+        fedaPayCustomerId: fedaPayTransaction.customer_id,
+      });
+    }
+
+    const transaction = await Transaction.create(CustomBody);
+    res.status(201).json(transaction);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error creating transaction", error: error.message });
+  }
+};
+
+exports.testCreateBalanceTransaction = async (req, res) => {
+  const CustomBody = { ...req.body };
+  const user = await req.userIn();
+
+  if (CustomBody.amount && !CustomBody.amount < user.balance) {
+    return res.status(400).json({
+      message: "Insufficient balance",
+    });
+  }
+
+  try {
+    if (CustomBody.type === "video_paid") {
+      const videoInPaid = await Video.findById(CustomBody.video);
+
+      if (!videoInPaid)
+        return res
+          .status(400)
+          .json({ message: CustomUtils.consts.MISSING_DATA });
+
+      CustomBody.amount = videoInPaid.price;
+      CustomBody.videoInPaid = videoInPaid._id;
+      await Video.findByIdAndUpdate(videoInPaid._id, {
+        $push: {
+          paidBy: user._id,
+        },
+      });
+
+      await User.findByIdAndUpdate(videoInPaid._id, {
+        balance: Number(user.balance) - videoInPaid.price,
+      });
+
+      CustomBody.user = user._id;
+      const nownow = new Date();
+      CustomBody.status = `Processed at ${nownow.toLocaleString("fr-FR", {
+        timeZone: "UTC",
+      })}`;
+      const transaction = await Transaction.create(CustomBody);
+      return res.status(201).json(transaction);
+    }
+
+    if (CustomBody.type === "course_paid") {
+      const courseInPaid = await Course.findById(CustomBody.course);
+
+      if (!courseInPaid)
+        return res
+          .status(400)
+          .json({ message: CustomUtils.consts.MISSING_DATA });
+
+      CustomBody.amount = courseInPaid.price;
+      CustomBody.courseInPaid = courseInPaid._id;
+
+      const course = await Course.findByIdAndUpdate(courseInPaid._id, {
+        $push: {
+          learners: user._id,
+        },
+      });
+
+      await Chat.findByIdAndUpdate(course.chat, {
+        $push: {
+          members: user._id,
+        },
+      });
+
+      await User.findByIdAndUpdate(videoInPaid._id, {
+        balance: Number(user.balance) - courseInPaid.price,
+      });
+
+      CustomBody.user = user._id;
+      const nownownow = new Date();
+      CustomBody.status = `Processed at ${nownownow.toLocaleString("fr-FR", {
+        timeZone: "UTC",
+      })}`;
+
+      const transaction = await Transaction.create(CustomBody);
+      return res.status(201).json(transaction);
+    }
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error creating transaction", error: error.message });
+  }
+};
+
 // Helper function to create payment payload
 function createPaymentPayload(CustomBody, user) {
   const paymentPayload = {
@@ -623,6 +776,27 @@ function createPaymentPayload(CustomBody, user) {
           phone_number: {
             number: user.phone.number,
             country: "TG",
+          },
+        },
+  };
+  return paymentPayload;
+}
+// Helper function to create payment payload
+function testCreatePaymentPayload(CustomBody, user) {
+  const paymentPayload = {
+    amount: CustomBody.amount,
+    description: CustomBody.type,
+    currency: { iso: "XOF" },
+    callback_url: CustomBody.callback,
+    customer: user.fedaPayCustomerId
+      ? { id: user.fedaPayCustomerId }
+      : {
+          firstname: user.firstname,
+          lastname: user.lastname,
+          email: user.email,
+          phone_number: {
+            number: "64000001",
+            country: "BJ",
           },
         },
   };
