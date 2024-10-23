@@ -8,14 +8,31 @@ router.route("/").get(async (req, res, next) => {
   let { limit, page, sort, fields, _from } = req.query;
   const queryObj = CustomUtils.advancedQuery(req.query);
   try {
-    const videos = await Video.find(queryObj)
+
+    const courses = await Course.find({}, "videos").exec();
+
+    const videosInCourses = courses.reduce((acc, course) => {
+      return acc.concat(course.videos);
+    }, []);
+
+    const videosNotInCourses = await Video.find({
+      _id: { $nin: videosInCourses },
+    })
       .limit(limit)
       .sort({
         createdAt: -1,
         ...sort,
       })
       .select(fields);
-    res.status(200).json(videos);
+
+    // const videos = await Video.find(queryObj)
+    //   .limit(limit)
+    //   .sort({
+    //     createdAt: -1,
+    //     ...sort,
+    //   })
+    //   .select(fields);
+    res.status(200).json(videosNotInCourses);
   } catch (error) {
     res.status(404).json({ message: error.message });
   }
