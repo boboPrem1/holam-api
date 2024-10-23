@@ -465,7 +465,7 @@ exports.createTransaction = async (req, res) => {
 
   if (
     CustomBody.type === "deposit" &&
-    (!CustomBody.amount || !CustomBody.amount < 100)
+    (!CustomBody.amount || CustomBody.amount < 100)
   ) {
     return res.status(400).json({
       message: CustomUtils.consts.MISSING_DATA,
