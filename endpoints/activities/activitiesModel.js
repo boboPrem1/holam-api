@@ -46,6 +46,11 @@ const activitySchema = mongoose.Schema(
         required: true,
       },
     },
+    case: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Case",
+      default: "000000000000000000000000"
+    },
   },
   {
     timestamps: true,
@@ -70,6 +75,10 @@ activitySchema.pre(/^find/, function (next) {
   this.populate({
     path: "images",
     select: "user path",
+  });
+  this.populate({
+    path: "case",
+    select: "user status report",
   });
   next();
 });

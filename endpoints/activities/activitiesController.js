@@ -1,5 +1,6 @@
 const Activity = require("./activitiesModel.js");
 const CustomUtils = require("../../utils/index.js");
+const Case = require("../cases/casesModel.js");
 
 // @Get all activities
 // @Route: /api/v1/activities
@@ -83,6 +84,12 @@ exports.createActivity = async (req, res) => {
         coordinates: req.body.location.split(" ").map(Number),
       },
     };
+
+    const holam_case = await Case.create({
+      user: userIn._id,
+    });
+
+    CustomBody.case = holam_case._id;
 
     const activity = await Activity.create(CustomBody);
     res.status(201).json(activity);
