@@ -9,6 +9,7 @@ const {
   signinWithTelOtp,
   signinWithEmail,
   resetPassword,
+  sendOtp,
 } = require("./authController.js");
 
 router.route("/signup").post(signup);
