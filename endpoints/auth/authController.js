@@ -639,7 +639,7 @@ exports.sendOtp = async (req, res, next) => {
     return res.status(404).json({ existing: false });
   }
 
-  await createAndSendOtp();
+  await createAndSendOtp(foundUser._id, indicatif, number);
 
   return res.status(200).json({
     message: "success",
