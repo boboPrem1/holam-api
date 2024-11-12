@@ -6,5 +6,7 @@ admin.initializeApp({
 });
 
 const messaging = admin.messaging();
+const db = admin.firestore()
 
-module.exports = messaging;
+module.exports.messaging = messaging;
+module.exports.db = db;

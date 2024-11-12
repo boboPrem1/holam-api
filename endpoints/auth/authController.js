@@ -628,6 +628,24 @@ async function createAndSendOtp(userId, indicatif, number) {
   return otp;
 }
 
+exports.sendOtp = async (req, res, next) => {
+  const { indicatif, number } = req.body;
+  const foundUser = await User.findOne({
+    "phone.indicatif": indicatif,
+    "phone.number": number,
+  });
+
+  if (!foundUser) {
+    return res.status(404).json({ existing: false });
+  }
+
+  await createAndSendOtp();
+
+  return res.status(200).json({
+    message: "success",
+  });
+};
+
 exports.verifyOtp = async (req, res, next) => {
   const { otp } = req.body;
   const foundOtp = await Otp.findOne({ otp });

@@ -241,6 +241,13 @@ exports.createCourse = async (req, res) => {
 
       CustomBody.chat = newChat._id;
 
+    const docRef = db.collection("chats").doc(newChat._id);
+
+    await docRef.set({
+      title: CustomBody.title + "'s Chat",
+      createdAt: firebaseAdmin.firestore.FieldValue.serverTimestamp(),
+    });
+
       const course = await Course.create(CustomBody);
       res.status(201).json(course);
     } else {

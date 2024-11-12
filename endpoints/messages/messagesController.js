@@ -159,6 +159,7 @@
 
 const Message = require("./messagesModel.js");
 const CustomUtils = require("../../utils/index.js");
+const { db } = require("../../firebaseConfig.js");
 
 // @Get all messages
 // @Route: /api/v1/messages
@@ -351,6 +352,12 @@ exports.createMessage = async (req, res) => {
   try {
     const CustomBody = { ...req.body };
     const userIn = await req.userIn();
+
+    await docRef.set({
+      name: name,
+      age: age,
+      createdAt: firebaseAdmin.firestore.FieldValue.serverTimestamp(),
+    });
 
     CustomBody.user = userIn._id;
     CustomBody.sender = userIn._id;
