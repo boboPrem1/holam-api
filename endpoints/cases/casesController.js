@@ -162,7 +162,7 @@
 //   }
 // };
 
-const Case = require("./holam_casesModel.js");
+const Case = require("./casesModel.js");
 const CustomUtils = require("../../utils/index.js");
 
 // Helper function to check user role
