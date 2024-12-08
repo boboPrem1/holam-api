@@ -395,7 +395,7 @@ exports.createGeolocationServicePointSms = async (req, res) => {
     let client = await GeolocationServiceClient.findOne({
       _id: req.body.client,
     });
-    console.log(client);
+    
     if (!client) return res.status(400).json({ message: "Client not found" });
 
     if (userIn.role.slug === "agent") {

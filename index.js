@@ -53,6 +53,7 @@ const geolocationServicePointsRoutes = require("./endpoints/geolocationServicePo
 const monitoringsRoutes = require("./endpoints/monitorings/monitoringsRoutes.js");
 const dashboardRoutes = require("./endpoints/tableauDeBord/dashboardRoutes.js");
 const uploadRoutes = require("./endpoints/uploads/uploadRoutes");
+const geolocationServicePointsRoutesNeo = require("./endpoints/geolocationServicePoints/geolocationServicePointsRoutesNeo.js");
 
 const origins = process.env.ORIGINS;
 // const ORIGINS_ARRAY = origins.split(",");
@@ -77,9 +78,27 @@ const ENDPOINT_SECRET = process.env.FEDA_PAY_WEBHOOK_SECRET;
 //     corsOptions,
 //   })
 // );
+
+function sanitizeUTF8(input) {
+  if (typeof input === "string") {
+    return Buffer.from(input, "utf-8").toString("utf-8");
+  }
+  return input;
+}
+
 app.use(cors());
-app.use(bodyParser.json({ limit: "50mb" }));
-app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
+app.use(bodyParser.json({ limit: "50mb", type: "application/json" }));
+app.use(bodyParser.urlencoded({ extended: true,limit: "50mb" }));
+app.use((req, res, next) => {
+  if (req.body) {
+    req.body = JSON.parse(
+      JSON.stringify(req.body, (key, value) =>
+        typeof value === "string" ? sanitizeUTF8(value) : value
+      )
+    );
+  }
+  next();
+});
 
 // allow static files
 app.use(express.static("public"));
@@ -176,6 +195,7 @@ app.use(
   API_URL_BASE + "geolocation_service_points",
   geolocationServicePointsRoutes
 );
+app.use(API_URL_BASE + "utils", geolocationServicePointsRoutesNeo);
 app.use(API_URL_BASE + "monitorings", monitoringsRoutes);
 app.use(API_URL_BASE + "dashboard", dashboardRoutes);
 app.use(API_URL_BASE + "upload", uploadRoutes);
