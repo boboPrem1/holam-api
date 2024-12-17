@@ -185,6 +185,8 @@ exports.getAllChats = async (req, res) => {
       queryObj.members = { $in: [userIn._id] };
     }
 
+    console.log(queryObj);
+
     const chats = await Chat.find(queryObj)
       .limit(parseInt(limit))
       .skip(skip)
@@ -277,26 +279,83 @@ exports.updateChat = async (req, res) => {
 // @Update chat by id
 // @Route: /api/v1/chats/:id
 // @Access: Private
+// exports.addMemberLearnerToCourseChat = async (req, res) => {
+//   try {
+//     const userIn = await req.userIn();
+//     const queryObj = {
+//       _id: req.params.id,
+//       members: {
+//         $nin: req.body.user,
+//       },
+//     };
+
+//     const chatFinded = await Chat.findOne(queryObj);
+
+//     if (!chatFinded) {
+//       return res
+//         .status(404)
+//         .json({ message: "Chat not found or user already in chat!" });
+//     }
+
+//     const courseFinded = await Course.findOne({
+//       chat: chatFinded._id,
+//       learners: {
+//         $nin: req.body.user,
+//       },
+//     });
+
+//     await Course.findOneAndUpdate(
+//       {
+//         chat: chatFinded._id,
+//         learners: {
+//           $nin: req.body.user,
+//         },
+//       },
+//       {
+//         learners: [...courseFinded.learners, req.body.user],
+//       },
+//       {
+//         new: true,
+//         runValidators: true,
+//       }
+//     );
+
+//     const chat = await Chat.findOneAndUpdate(
+//       queryObj,
+//       {
+//         members: [...chatFinded.members, req.body.user],
+//       },
+//       {
+//         new: true,
+//         runValidators: true,
+//       }
+//     );
+
+//     if (!chat) {
+//       return res.status(404).json({ message: "Chat not found!" });
+//     }
+
+//     res.status(200).json(chat);
+//   } catch (error) {
+//     res.status(500).json({ message: error.message });
+//   }
+// };
+
 exports.addMemberLearnerToCourseChat = async (req, res) => {
   try {
     const userIn = await req.userIn();
-    const queryObj = {
+    const userId = req.body.user;
+
+    // Vérification de la présence de l'utilisateur
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: "Invalid or missing user ID." });
+    }
+
+    // Recherche du chat et vérification que l'utilisateur n'est pas déjà dans les membres
+    const chatFinded = await Chat.findOne({
       _id: req.params.id,
-      members: {
-        $nin: req.body.user,
-      },
-    };
-
-    // Restreindre l'accès au chat à l'utilisateur courant s'il n'est pas super admin ou admin
-    // if (
-    //   userIn.role.slug !== "super-administrateur" &&
-    //   userIn.role.slug !== "admin"
-    // ) {
-    //   queryObj.user = userIn._id;
-    //   queryObj.members = { $in: [userIn._id] };
-    // }
-
-    const chatFinded = await Chat.findOne(queryObj);
+      members: { $nin: [userId] }, // $nin vérifie que l'utilisateur n'est pas déjà membre
+    });
 
     if (!chatFinded) {
       return res
@@ -304,47 +363,38 @@ exports.addMemberLearnerToCourseChat = async (req, res) => {
         .json({ message: "Chat not found or user already in chat!" });
     }
 
+    // Recherche du cours associé au chat
     const courseFinded = await Course.findOne({
       chat: chatFinded._id,
-      learners: {
-        $nin: req.body.user,
-      },
+      learners: { $nin: [userId] }, // $nin vérifie que l'utilisateur n'est pas déjà apprenant
     });
 
-    await Course.findOneAndUpdate(
-      {
-        chat: chatFinded._id,
-        learners: {
-          $nin: req.body.user,
-        },
-      },
-      {
-        learners: [...courseFinded.learners, req.body.user],
-      },
-      {
-        new: true,
-        runValidators: true,
-      }
-    );
-
-    const chat = await Chat.findOneAndUpdate(
-      queryObj,
-      {
-        members: [...chatFinded.members, req.body.user],
-      },
-      {
-        new: true,
-        runValidators: true,
-      }
-    );
-
-    if (!chat) {
-      return res.status(404).json({ message: "Chat not found!" });
+    if (!courseFinded) {
+      return res
+        .status(404)
+        .json({ message: "Course not found or user already a learner!" });
     }
 
-    res.status(200).json(chat);
+    // Mettre à jour le cours en ajoutant l'utilisateur dans les learners
+    await Course.findByIdAndUpdate(
+      courseFinded._id,
+      { $addToSet: { learners: userId } }, // $addToSet ajoute uniquement si l'ID n'existe pas
+      { new: true, runValidators: true }
+    );
+
+    // Mettre à jour le chat en ajoutant l'utilisateur dans les members
+    const updatedChat = await Chat.findByIdAndUpdate(
+      chatFinded._id,
+      { $addToSet: { members: userId } }, // $addToSet évite les doublons
+      { new: true, runValidators: true }
+    );
+
+    res.status(200).json(updatedChat);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Error adding user to chat and course:", error);
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: error.message });
   }
 };
 
