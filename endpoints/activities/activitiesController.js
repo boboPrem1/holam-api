@@ -86,6 +86,7 @@ exports.createActivity = async (req, res) => {
     };
 
     const holam_case = await Case.create({
+      report: `${CustomBody.description} created`,
       user: userIn._id,
     });
 
