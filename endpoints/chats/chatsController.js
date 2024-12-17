@@ -158,6 +158,7 @@
 const Chat = require("./chatsModel.js");
 const CustomUtils = require("../../utils/index.js");
 const Course = require("../courses/coursesModel.js");
+const { default: mongoose } = require("mongoose");
 
 // @Get all chats
 // @Route: /api/v1/chats
