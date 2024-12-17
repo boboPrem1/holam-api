@@ -395,10 +395,15 @@ exports.getTransactionById = async (req, res) => {
 // Helper function to handle FedaPay transaction
 async function handleFedaPayTransaction(transaction, fedaPayTransaction, user) {
   const userIn = user;
+
+    try{
   if (fedaPayTransaction.status === "approved") {
-    let amount = fedaPayTransaction.amount_transferred;
-    const updateBalance =
-      fedaPayTransaction.description === "deposit" ? amount : (amount = 0);
+    const isDeposit = fedaPayTransaction.description === "deposit";
+    // let amount = fedaPayTransaction.amount_transferred;
+    // const updateBalance =
+    // fedaPayTransaction.description === "deposit" ? amount : (amount = 0);
+
+    const amount = isDeposit ? fedaPayTransaction.amount_transferred : 0;
 
     if (fedaPayTransaction.description === "video_paid") {
       await Video.findByIdAndUpdate(transaction.videoInPaid, {
@@ -408,31 +413,54 @@ async function handleFedaPayTransaction(transaction, fedaPayTransaction, user) {
       });
     }
     if (fedaPayTransaction.description === "course_paid") {
-      const course = await Course.findByIdAndUpdate(transaction.courseInPaid, {
-        $push: {
-          learners: userIn._id,
-        },
-      });
+      // const course = await Course.findByIdAndUpdate(transaction.courseInPaid, {
+      //   $push: {
+      //     learners: userIn._id,
+      //   },
+      // });
 
-      await Course.findByIdAndUpdate(transaction.courseInPaid, {
-        $push: {
-          paidBy: userIn._id,
-        },
-      });
+      // await Course.findByIdAndUpdate(transaction.courseInPaid, {
+      //   $push: {
+      //     paidBy: userIn._id,
+      //   },
+      // });
 
-      await Chat.findByIdAndUpdate(course.chat, {
-        $push: {
-          members: userIn._id,
+      const course = await Course.findByIdAndUpdate(
+        transaction.courseInPaid,
+        {
+          $push: { learners: user._id, paidBy: user._id },
         },
-      });
-    }
-    if (amount)
-      await User.findByIdAndUpdate(
-        user._id,
-        { $inc: { balance: updateBalance } },
         { new: true }
       );
 
+      // await Chat.findByIdAndUpdate(course.chat, {
+      //   $push: {
+      //     members: userIn._id,
+      //   },
+      // });
+
+      if (course?.chat) {
+        await Chat.findByIdAndUpdate(course.chat, {
+          $push: { members: user._id },
+        });
+      }
+    }
+    if (amount > 0) {
+      await User.findByIdAndUpdate(
+        user._id,
+        { $inc: { balance: amount } },
+        { new: true }
+      );
+    }
+
+    // transaction = await Transaction.findByIdAndUpdate(
+    //   transaction._id,
+    //   {
+    //     status: `Processed ${fedaPayTransaction.description} at ${fedaPayTransaction.approved_at}`,
+    //     paidAt: fedaPayTransaction.approved_at,
+    //   },
+    //   { new: true }
+    // );
     transaction = await Transaction.findByIdAndUpdate(
       transaction._id,
       {
@@ -450,6 +478,10 @@ async function handleFedaPayTransaction(transaction, fedaPayTransaction, user) {
   }
 
   return transaction;
+   } catch (error) {
+    console.error("Error processing FedaPay transaction:", error.message);
+    throw new Error("Transaction processing failed. Please try again.");
+  }
 }
 
 // @Create new transaction
@@ -476,10 +508,12 @@ exports.createTransaction = async (req, res) => {
     if (CustomBody.type === "video_paid") {
       const videoInPaid = await Video.findById(CustomBody.video);
 
-      if (!videoInPaid)
-        return res
-          .status(400)
-          .json({ message: CustomUtils.consts.MISSING_DATA });
+      if (!videoInPaid) throw new Error("Video not found");
+
+      // if (!videoInPaid)
+      //   return res
+      //     .status(400)
+      //     .json({ message: CustomUtils.consts.MISSING_DATA });
 
       CustomBody.amount = videoInPaid.price;
       CustomBody.videoInPaid = videoInPaid._id;
@@ -488,10 +522,12 @@ exports.createTransaction = async (req, res) => {
     if (CustomBody.type === "course_paid") {
       const courseInPaid = await Course.findById(CustomBody.course);
 
-      if (!courseInPaid)
-        return res
-          .status(400)
-          .json({ message: CustomUtils.consts.MISSING_DATA });
+      if (!courseInPaid) throw new Error("Course not found");
+
+      // if (!courseInPaid)
+      //   return res
+      //     .status(400)
+      //     .json({ message: CustomUtils.consts.MISSING_DATA });
 
       CustomBody.amount = courseInPaid.price;
       CustomBody.courseInPaid = courseInPaid._id;
