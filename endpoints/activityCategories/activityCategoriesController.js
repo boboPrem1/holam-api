@@ -62,10 +62,10 @@ exports.getActivitySubCategoriesByCategoryId = async (req, res) => {
       },
     });
     // const activitySubCategory = activitySubCategorySearch[0];
-    if (!activitySubCategorySearch.length)
-      return res.status(404).json({
-        message: CustomUtils.consts.NOT_FOUND,
-      });
+    // if (!activitySubCategorySearch.length)
+    //   return res.status(404).json({
+    //     message: CustomUtils.consts.NOT_FOUND,
+    //   });
     res.status(200).json(activitySubCategorySearch);
   } catch (error) {
     res.status(500).json({ message: error.message });
