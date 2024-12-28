@@ -14,7 +14,6 @@ const activityCategorySchema = mongoose.Schema(
     },
     name: {
       type: String,
-      unique: true,
       required: true,
     },
     image: {
