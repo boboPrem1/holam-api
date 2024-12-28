@@ -1,4 +1,5 @@
 const ActivityCategory = require("./activityCategoriesModel.js");
+const ActivitySubCategory = require("../activitySubCategories/activitySubCategoriesModel.js");
 const CustomUtils = require("../../utils/index.js");
 
 // @Get all activityCategories types
@@ -42,6 +43,30 @@ exports.getActivityCategoryById = async (req, res) => {
         message: CustomUtils.consts.NOT_FOUND,
       });
     res.status(200).json(activityCategory);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @Get activityCategory type by id
+// @Route: /api/v1/activityCategories/:id
+// @Access: Public
+exports.getActivitySubCategoriesByCategoryId = async (req, res) => {
+  try {
+    // get activityCategory type by id
+    const userIn = await req.userIn();
+
+    const activitySubCategorySearch = await ActivitySubCategory.find({
+      category: {
+        $eq: req.params.id,
+      },
+    });
+    // const activitySubCategory = activitySubCategorySearch[0];
+    if (!activitySubCategorySearch.length)
+      return res.status(404).json({
+        message: CustomUtils.consts.NOT_FOUND,
+      });
+    res.status(200).json(activitySubCategorySearch);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
