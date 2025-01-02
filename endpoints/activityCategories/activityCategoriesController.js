@@ -48,6 +48,7 @@ exports.getActivityCategoryById = async (req, res) => {
   }
 };
 
+
 // @Get activityCategory type by id
 // @Route: /api/v1/activityCategories/:id
 // @Access: Public
