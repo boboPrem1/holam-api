@@ -13,10 +13,7 @@ const { Server } = require("socket.io");
 
 const PORT = process.env.SERVER_PORT || 4534;
 const API_URL_BASE = process.env.API_URL_BASE ? process.env.API_URL_BASE : "/";
-// const DASH_URL =
-//   process.env.ENV === "dev"
-//     ? process.env.DASH_URL_DEV
-//     : process.env.DASH_URL_PROD;
+
 const URL_CONNECT_DEV = process.env.URL_CONNECT;
 
 const userRoutes = require("./endpoints/users/userRoutes");
