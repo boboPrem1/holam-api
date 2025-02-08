@@ -83,7 +83,23 @@ function sanitizeUTF8(input) {
   return input;
 }
 
-app.use(cors());
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "X-Requested-With",
+    "Origin",
+    "Accept",
+    "X-Custom-Header",
+    "X-FEDAPAY-Signature",
+    "X-FEDAPAY-TIMESTAMP",
+  ],
+  credentials: true,
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
+}));
 app.use(bodyParser.json({ limit: "50mb", type: "application/json" }));
 app.use(bodyParser.urlencoded({ extended: true,limit: "50mb" }));
 app.use((req, res, next) => {
